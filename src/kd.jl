@@ -15,6 +15,11 @@ immutable KDTree{T <: FloatingPoint}
 	perm::Vector{Int}
 
 	root::KDNode
+
+	verts::Set{Vector{T}}
+
+	# Top-level bounding box
+	bounds::Matrix{T}
 end
 
 
@@ -35,10 +40,15 @@ function KDTree{T <: FloatingPoint}(xs::AbstractMatrix{T})
 	leaf_diameter_cutoff = 0.0 * diam
 	verts = Set{Vector{T}}()
 
+	# Add verticies defined by the bounds
+	for vert in product([bounds[:,j] for j in 1:m]...)
+		push!(verts, T[vert...])
+	end
+
 	root = build_kdtree(xs, sub(perm, 1:n), bounds,
 		                leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
-	KDTree(xs, collect(1:n), root)
+	KDTree(xs, collect(1:n), root, verts, bounds)
 end
 
 
@@ -46,8 +56,9 @@ immutable KDLeafNode <: KDNode
 end
 
 
-immutable KDInternalNode <: KDNode
+immutable KDInternalNode{T <: FloatingPoint} <: KDNode
 	j::Int # dimension on which the data is split
+	med::T # median value where the split occours
 	leftnode::KDNode
 	rightnode::KDNode
 end
@@ -64,11 +75,7 @@ end
 #   Computed diameter
 #
 function diameter(bounds::Matrix)
-	diam = 0.0
-	for i in 1:size(bounds, 2)
-		diam += (bounds[2, i] - bounds[1, i])^2
-	end
-	sqrt(diam)
+	euclidean(vec(bounds[1,:]), vec(bounds[2,:]))
 end
 
 
@@ -103,23 +110,85 @@ function build_kdtree{T}(xs::AbstractMatrix{T},
 	end
 
 	# find the median and partition
-	mid = div(length(perm), 2)
-	select!(perm, mid, by=i -> xs[i, j])
-	med = xs[perm[mid], j]
+	if isodd(length(perm))
+		mid = div(length(perm), 2)
+		select!(perm, mid, by=i -> xs[i, j])
+		med = xs[perm[mid], j]
+		mid1 = mid
+		mid2 = mid + 1
+	else
+		mid1 = div(length(perm), 2)
+		mid2 = mid1 + 1
+		select!(perm, mid1, by=i -> xs[i, j])
+		select!(perm, mid2, by=i -> xs[i, j])
+		med = (xs[perm[mid1], j] + xs[perm[mid2], j]) / 2
+	end
 
 	leftbounds = copy(bounds)
 	leftbounds[2, j] = med
-	leftnode = build_kdtree(xs, sub(perm, 1:mid), bounds,
+	leftnode = build_kdtree(xs, sub(perm, 1:mid1), bounds,
 		                    leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
 	rightbounds = copy(bounds)
 	rightbounds[1, j] = med
-	rightnode = build_kdtree(xs, sub(perm, mid+1:length(perm)), bounds,
+	rightnode = build_kdtree(xs, sub(perm, mid2:length(perm)), bounds,
 		                     leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
-	KDInternalNode(j, leftnode, rightnode)
+	coords = Array(Array, m)
+	for i in 1:m
+		if i == j
+			coords[i] = [med]
+		else
+			coords[i] = bounds[:, i]
+		end
+	end
 
-	# TODO: We need to keep track of verticies also. I'm not sure what else we
-	# need to find all points within a particular range.
+	for vert in product(coords...)
+		push!(verts, T[vert...])
+	end
+
+	KDInternalNode{T}(j, med, leftnode, rightnode)
+end
+
+
+# Verticies defining a bounding hypercube
+function bounds_verts(bounds::Matrix)
+	collect(product([bounds[:, i] for i in 1:size(bounds, 2)]...))
+end
+
+
+
+# Traverse the tree to the bottom and return the adjacent verticies
+function traverse{T}(kdtree::KDTree{T}, xs::AbstractVector{T})
+	m = size(kdtree.bounds, 2)
+
+	if length(xs) != m
+		error("$(m)-dimensional kd-tree searched with a length $(length(x)) vector.")
+	end
+
+	for j in 1:m
+		if xs[j] < kdtree.bounds[1, j] || xs[j] > kdtree.bounds[2, j]
+			error(
+				"""
+				Loess cannot perform extrapolation. Predict can only be applied
+				to points within the bounding hypercube of the data used to train
+				the model.
+				""")
+		end
+	end
+
+	bounds = copy(kdtree.bounds)
+	node = kdtree.root
+	while !isa(node, KDLeafNode)
+		if xs[node.j] <= node.med
+			bounds[2, node.j] = node.med
+			node = node.leftnode
+		else
+			bounds[1, node.j] = node.med
+			node = node.rightnode
+		end
+	end
+
+	bounds_verts(bounds)
 end
 
