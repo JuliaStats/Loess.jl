@@ -23,7 +23,22 @@ immutable KDTree{T <: FloatingPoint}
 end
 
 
-function KDTree{T <: FloatingPoint}(xs::AbstractMatrix{T})
+# Construct a kd-tree
+#
+# Args:
+#   xs: Data organized in the tree.
+#   leaf_size_factor: Stop spliting if a node contains
+#       fewer than leaf_size_factor * n elements.
+#   leaf_diameter_factor: Stop spliting if a node's bounding
+#       hypercube has diameter less that leaf_diameter_factor
+#       times the diameter of the root node's bounding hypercube.
+#
+# Returns:
+#   A KDTree object
+#
+function KDTree{T <: FloatingPoint}(xs::AbstractMatrix{T},
+	                                leaf_size_factor=0.05,
+	                                leaf_diameter_factor=0.0)
 	n, m = size(xs)
 	perm = collect(1:n)
 
@@ -35,9 +50,8 @@ function KDTree{T <: FloatingPoint}(xs::AbstractMatrix{T})
 	end
 	diam = diameter(bounds)
 
-	# TODO: pass in values for these
-	leaf_size_cutoff = iceil(0.05 * n)
-	leaf_diameter_cutoff = 0.0 * diam
+	leaf_size_cutoff = iceil(leaf_size_factor * n)
+	leaf_diameter_cutoff = leaf_diameter_factor * diam
 	verts = Set{Vector{T}}()
 
 	# Add verticies defined by the bounds
@@ -81,6 +95,23 @@ end
 
 # Recursively build a kd-tree
 #
+# Args:
+#   xs: Data being orginized.
+#   perm: Permutation of the data, used to avoid
+#       directly sorting or modifying xs.
+#   bounds: Bounding hypercube of the node.
+#   leaf_size_cutoff: stop spliting on nodes with more than
+#       this many values.
+#   leaf_diameter_cutoff: stop splitting on nodes with less
+#        than this diameter.
+#   verts: current set of vertexes
+#
+# Modifies:
+#   perm, verts
+#
+# Returns:
+#   Either a KDLeafNode or a KDInternalNode
+# 
 function build_kdtree{T}(xs::AbstractMatrix{T},
 	                     perm::SubArray,
 	                     bounds::Matrix{T},
@@ -151,14 +182,14 @@ function build_kdtree{T}(xs::AbstractMatrix{T},
 end
 
 
-# Verticies defining a bounding hypercube
+# Given a bounding hypecube, return its verticies
 function bounds_verts(bounds::Matrix)
 	collect(product([bounds[:, i] for i in 1:size(bounds, 2)]...))
 end
 
 
-
-# Traverse the tree to the bottom and return the adjacent verticies
+# Traverse the tree to the bottom and return the verticies of
+# the leaf node's bounding hypercube.
 function traverse{T}(kdtree::KDTree{T}, xs::AbstractVector{T})
 	m = size(kdtree.bounds, 2)
 
