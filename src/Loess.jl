@@ -9,8 +9,9 @@ module Loess
 import Iterators.product
 import Distance.euclidean
 
-include("kd.jl")
+export loess, predict
 
+include("kd.jl")
 
 
 type LoessModel{T <: FloatingPoint}
@@ -143,6 +144,12 @@ end
 function predict{T <: FloatingPoint}(model::LoessModel{T}, zs::AbstractVector{T})
 	m = size(model.xs, 2)
 
+	# in the univariate case, interpret a non-singleton zs as vector of
+	# ponits, not one point
+	if m == 1 && length(zs) > 1
+		return predict(model, reshape(zs, (length(zs), 1)))
+	end
+
 	if length(zs) != m
 		error("$(m)-dimensional model applied to length $(length(zs)) vector")
 	end
@@ -164,6 +171,15 @@ function predict{T <: FloatingPoint}(model::LoessModel{T}, zs::AbstractVector{T}
 		#   1. Univariate linear interpolation between adjacent verticies.
 		#   2. Blend these estimates. (I'm not sure how this is done.)
 	end
+end
+
+
+function predict{T <: FloatingPoint}(model::LoessModel{T}, zs::AbstractMatrix{T})
+	ys = Array(T, size(zs, 1))
+	for i in 1:size(zs, 1)
+		ys[i] = predict(model, vec(zs[i,:]))
+	end
+	ys
 end
 
 
