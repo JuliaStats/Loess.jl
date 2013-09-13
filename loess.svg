@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="152.4mm" height="76.2mm" viewBox="0 0 152.4 76.2" style="stroke:black;fill:black" stroke-width="0.5">
+<g clip-path="url(#clippath1)">
+  <g font-size="3.18" class="guide ylabels" font-family="PT Sans,Helvetica Neue,Helvetica,sans" stroke="none" fill="#4C404B">
+    <text x="17.85" y="-13.82" text-anchor="end" style="dominant-baseline:central">2.5</text>
+    <text x="17.85" y="87.89" text-anchor="end" style="dominant-baseline:central">-2.5</text>
+    <text x="17.85" y="16.7" text-anchor="end" style="dominant-baseline:central">1</text>
+    <text x="17.85" y="108.23" text-anchor="end" style="dominant-baseline:central">-3.5</text>
+    <text x="17.85" y="118.4" text-anchor="end" style="dominant-baseline:central">-4</text>
+    <text x="17.85" y="77.72" text-anchor="end" style="dominant-baseline:central">-2</text>
+    <text x="17.85" y="47.21" text-anchor="end" style="dominant-baseline:central">-0.5</text>
+    <text x="17.85" y="-44.33" text-anchor="end" style="dominant-baseline:central">4</text>
+    <text x="17.85" y="57.38" text-anchor="end" style="dominant-baseline:central">-1</text>
+    <text x="17.85" y="37.04" text-anchor="end" style="dominant-baseline:central">0</text>
+    <text x="17.85" y="98.06" text-anchor="end" style="dominant-baseline:central">-3</text>
+    <text x="17.85" y="-23.99" text-anchor="end" style="dominant-baseline:central">3</text>
+    <text x="17.85" y="26.87" text-anchor="end" style="dominant-baseline:central">0.5</text>
+    <text x="17.85" y="6.53" text-anchor="end" style="dominant-baseline:central">1.5</text>
+    <text x="17.85" y="-3.64" text-anchor="end" style="dominant-baseline:central">2</text>
+    <text x="17.85" y="-34.16" text-anchor="end" style="dominant-baseline:central">3.5</text>
+    <text x="17.85" y="67.55" text-anchor="end" style="dominant-baseline:central">-1.5</text>
+    <text x="17.85" y="-54.5" text-anchor="end" style="dominant-baseline:central">4.5</text>
+  </g>
+  <g font-size="3.88" font-family="PT Sans,Helvetica Neue,Helvetica,sans" stroke="none" fill="#362A35">
+    <text x="8.28" y="31.95" text-anchor="middle" style="dominant-baseline:central" transform="rotate(-90, 8.28, 31.95)">y</text>
+  </g>
+</g>
+<g clip-path="url(#clippath2)">
+  <g font-size="3.18" class="guide xlabels" font-family="PT Sans,Helvetica Neue,Helvetica,sans" stroke="none" fill="#4C404B">
+    <text x="83.12" y="62.64" text-anchor="middle">5</text>
+    <text x="-159.43" y="62.64" text-anchor="middle">-15</text>
+    <text x="143.76" y="62.64" text-anchor="middle">10</text>
+    <text x="265.04" y="62.64" text-anchor="middle">20</text>
+    <text x="22.49" y="62.64" text-anchor="middle">0</text>
+    <text x="204.4" y="62.64" text-anchor="middle">15</text>
+    <text x="-38.15" y="62.64" text-anchor="middle">-5</text>
+    <text x="-98.79" y="62.64" text-anchor="middle">-10</text>
+    <text x="325.68" y="62.64" text-anchor="middle">25</text>
+  </g>
+  <g font-size="3.88" font-family="PT Sans,Helvetica Neue,Helvetica,sans" stroke="none" fill="#362A35">
+    <text x="83.12" y="69.2" text-anchor="middle">x</text>
+  </g>
+</g>
+<g>
+  <g clip-path="url(#clippath3)">
+    <g class="guide background" stroke="#F1F1F5" fill="#FAFAFA">
+      <path d="M18.85,5 L 147.4 5 147.4 58.9 18.85 58.9 z" />
+    </g>
+    <g class="guide ygridlines" stroke="#F0F0F3" stroke-width="0.2">
+      <path d="M18.85,-13.82 L 147.4 -13.82" />
+      <path d="M18.85,87.89 L 147.4 87.89" />
+      <path d="M18.85,16.7 L 147.4 16.7" />
+      <path d="M18.85,108.23 L 147.4 108.23" />
+      <path d="M18.85,118.4 L 147.4 118.4" />
+      <path d="M18.85,77.72 L 147.4 77.72" />
+      <path d="M18.85,47.21 L 147.4 47.21" />
+      <path d="M18.85,-44.33 L 147.4 -44.33" />
+      <path d="M18.85,57.38 L 147.4 57.38" />
+      <path d="M18.85,37.04 L 147.4 37.04" />
+      <path d="M18.85,98.06 L 147.4 98.06" />
+      <path d="M18.85,-23.99 L 147.4 -23.99" />
+      <path d="M18.85,26.87 L 147.4 26.87" />
+      <path d="M18.85,6.53 L 147.4 6.53" />
+      <path d="M18.85,-3.64 L 147.4 -3.64" />
+      <path d="M18.85,-34.16 L 147.4 -34.16" />
+      <path d="M18.85,67.55 L 147.4 67.55" />
+      <path d="M18.85,-54.5 L 147.4 -54.5" />
+    </g>
+    <g class="guide xgridlines" stroke="#F0F0F3" stroke-width="0.2">
+      <path d="M83.12,5 L 83.12 58.9" />
+      <path d="M-159.43,5 L -159.43 58.9" />
+      <path d="M143.76,5 L 143.76 58.9" />
+      <path d="M265.04,5 L 265.04 58.9" />
+      <path d="M22.49,5 L 22.49 58.9" />
+      <path d="M204.4,5 L 204.4 58.9" />
+      <path d="M-38.15,5 L -38.15 58.9" />
+      <path d="M-98.79,5 L -98.79 58.9" />
+      <path d="M325.68,5 L 325.68 58.9" />
+    </g>
+  </g>
+  <g clip-path="url(#clippath4)">
+    <g stroke-width="0.3">
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="32.93" cy="15.06" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="116.52" cy="15.49" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="63.23" cy="36.32" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="27.2" cy="25.9" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="138.58" cy="31.94" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="34.65" cy="11.66" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="131.1" cy="26.4" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="73.31" cy="54.26" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="109.3" cy="13" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="140.03" cy="35.42" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="37.73" cy="15.29" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="47.35" cy="9.57" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="101.46" cy="24.07" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="125.18" cy="14.32" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="113.98" cy="10.33" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="103.46" cy="19.95" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="103.98" cy="18.87" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="90.38" cy="44.81" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="45.31" cy="16.01" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="125.72" cy="20.72" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="138.26" cy="36.15" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="120.64" cy="15.3" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="85.1" cy="54.25" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="143.36" cy="37.43" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="124.21" cy="17.25" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="52.9" cy="23.69" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="27.65" cy="18.53" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="97.9" cy="36.98" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="115.43" cy="7.72" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="50.35" cy="12.75" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="142.03" cy="40.56" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="79.92" cy="54.74" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="132.7" cy="28.57" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="127.13" cy="13.42" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="74.75" cy="52.52" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="110.54" cy="10.95" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="66.33" cy="43.85" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="80.01" cy="55.41" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="121.89" cy="10.94" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="37.54" cy="13.57" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="67.03" cy="37.48" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="143.59" cy="44.89" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="92.58" cy="41.65" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="89.98" cy="41.48" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="142.37" cy="44.93" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="33.29" cy="13.52" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="24.61" cy="25.71" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="90.49" cy="44.89" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="67.63" cy="43.52" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="102.49" cy="29.86" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="63.64" cy="34.05" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="104.29" cy="19.11" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="91.91" cy="37.93" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="35.45" cy="19.07" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="59.14" cy="28.81" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="89.76" cy="48.93" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="76.14" cy="47.38" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="62.73" cy="31.66" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="89.6" cy="47.7" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="25.16" cy="24.76" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="142.7" cy="41.83" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="94.98" cy="36.98" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="33.82" cy="18.28" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="140.99" cy="36.59" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="121" cy="8.42" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="32.32" cy="14.68" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="77.26" cy="47.43" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="140.74" cy="33.72" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="121.66" cy="10.78" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="120.41" cy="7.15" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="26.52" cy="21.63" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="36.07" cy="13.98" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="122.34" cy="16.53" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="108.87" cy="21.14" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="49.93" cy="19.07" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="134.31" cy="24.65" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="39.72" cy="12.16" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="139.6" cy="35.14" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="30.98" cy="22.44" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="56.29" cy="21.03" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="71.56" cy="48.43" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="78.69" cy="56.61" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="133.72" cy="31.43" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="129.87" cy="16.09" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="57.96" cy="25.85" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="35.27" cy="15.34" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="113.03" cy="17.5" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="125.24" cy="13.39" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="100.42" cy="28.92" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="83.35" cy="52.07" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="88.53" cy="46.34" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="132.17" cy="26.1" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="129.85" cy="24.11" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="122.85" cy="17.12" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="23.18" cy="27.72" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="116.1" cy="12.6" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="114.01" cy="10.54" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="90.63" cy="44.35" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="81.24" cy="53.31" r="0.6" />
+      </g>
+      <g class="geometry color_LCHab(70.0,60.0,240.0)" stroke="#0096DD" fill="#00BFFF" stroke-width="0.3">
+        <circle cx="78.94" cy="52.31" r="0.6" />
+      </g>
+    </g>
+    <g class="geometry" stroke="#00BFFF" stroke-width="0.3" fill="none">
+      <path d="M23.18,19.12 L 24.39 18.76 25.6 18.49 26.82 18.28 28.03 18.15 29.24 18.09 30.45 18.1 31.67 18.17 32.88 18.31 34.09 18.51 35.31 18.78 36.52 19.1 37.73 19.47 38.94 19.9 40.16 20.37 41.37 20.9 42.58 21.48 43.79 22.11 45.01 22.78 46.22 23.5 47.43 24.25 48.65 25.04 49.86 25.85 51.07 26.72 52.28 27.64 53.5 28.59 54.71 29.58 55.92 30.58 57.14 31.6 58.35 32.62 59.56 33.73 60.77 34.88 61.99 36.04 63.2 37.2 64.41 38.41 65.62 39.66 66.84 40.91 68.05 42.12 69.26 43.35 70.48 44.65 71.69 45.96 72.9 47.27 74.11 48.49 75.33 49.2 76.54 49.85 77.75 50.3 78.97 50.49 80.18 50.5 81.39 50.09 82.6 49.59 83.82 48.92 85.03 48.03 86.24 47.03 87.45 45.96 88.67 44.82 89.88 43.64 91.09 42.34 92.31 40.9 93.52 39.35 94.73 37.7 95.94 35.91 97.16 34 98.37 32.01 99.58 29.98 100.79 27.94 102.01 26.05 103.22 24.23 104.43 22.57 105.65 21.04 106.86 19.61 108.07 18.31 109.28 17.24 110.5 16.43 111.71 15.72 112.92 15.14 114.14 14.72 115.35 14.43 116.56 14.29 117.77 14.26 118.99 14.35 120.2 14.56 121.41 14.9 122.62 15.36 123.84 15.94 125.05 16.65 126.26 17.49 127.48 18.45 128.69 19.54 129.9 20.75 131.11 22.1 132.33 23.57 133.54 25.18 134.75 26.91 135.97 28.77 137.18 30.77 138.39 32.89 139.6 35.14 140.82 37.52 142.03 40.03 143.24 42.67" />
+    </g>
+  </g>
+</g>
+<defs>
+<clipPath id="clippath1">
+  <path d="M5,0 L 18.85 0 18.85 63.9 5 63.9" />
+</clipPath
+><clipPath id="clippath2">
+  <path d="M13.85,58.9 L 152.4 58.9 152.4 71.2 13.85 71.2" />
+</clipPath
+><clipPath id="clippath3">
+  <path d="M18.85,5 L 147.4 5 147.4 58.9 18.85 58.9" />
+</clipPath
+><clipPath id="clippath4">
+  <path d="M18.85,5 L 147.4 5 147.4 58.9 18.85 58.9" />
+</clipPath
+></defs>
+</svg>
