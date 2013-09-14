@@ -2,9 +2,9 @@
 # Loess
 
 This is a pure Julia loess implementation, based on the fast kd-tree based
-approximation described in the original Cleveland, et al, implemented netlib
-loess C/Fortran code, and used by many, including in R's loess function.
-
+approximation described in the original Cleveland, et al papers, implemented
+in the netlib loess C/Fortran code, and used by many, including in R's loess
+function.
 
 ## Synopsis
 
@@ -27,6 +27,8 @@ p = plot(x=xs, y=ys, Geom.point, Guide.xlabel("x"), Guide.ylabel("y"),
          layer(Geom.line, x=zs, y=ws))
 draw(SVG("loess.svg", 6inch, 3inch), p)
 ```
+
+![Example Plot](http://dcjones.github.io/Loess.jl/loess.svg)
 
 
 ## Status
