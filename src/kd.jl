@@ -45,8 +45,8 @@ function KDTree{T <: FloatingPoint}(xs::AbstractMatrix{T},
 	bounds = Array(T, (2, m))
 	for j in 1:m
 		col = xs[:,j]
-		bounds[1, j] = min(col)
-		bounds[2, j] = max(col)
+		bounds[1, j] = minimum(col)
+		bounds[2, j] = maximum(col)
 	end
 	diam = diameter(bounds)
 
