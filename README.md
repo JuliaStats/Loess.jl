@@ -24,11 +24,17 @@ vs = predict(model, us)
 
 using Gadfly
 p = plot(x=xs, y=ys, Geom.point, Guide.xlabel("x"), Guide.ylabel("y"),
-         layer(Geom.line, x=zs, y=ws))
+         layer(Geom.line, x=us, y=vs))
 draw(SVG("loess.svg", 6inch, 3inch), p)
 ```
 
 ![Example Plot](http://dcjones.github.io/Loess.jl/loess.svg)
+
+There's also a shortcut in Gadfly to draw these plots:
+
+```julia
+plot(x=xs, y=ys, Geom.point, Geom.smooth, Guide.xlabel("x"), Guide.ylabel("y"))
+```
 
 
 ## Status
