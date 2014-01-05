@@ -1,4 +1,3 @@
-
 # Loess
 
 This is a pure Julia loess implementation, based on the fast kd-tree based
@@ -19,7 +18,7 @@ ys = sin(xs) .+ 0.5 * rand(100)
 
 model = loess(xs, ys)
 
-us = collect(min(xs):0.1:max(xs))
+us = collect(minimum(xs):0.1:maximum(xs))
 vs = predict(model, us)
 
 using Gadfly
