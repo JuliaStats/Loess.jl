@@ -115,7 +115,7 @@ function loess{T <: FloatingPoint}(xs::AbstractMatrix{T}, ys::AbstractVector{T};
 			vs[i] = ys[perm[i]] * w
 		end
 		F = qrfact!(us)
-		Q = full(F[:Q], true)[:,1:degree*m+1]
+		Q = full(F[:Q])[:,1:degree*m+1]
 		R = F[:R][1:degree*m+1, 1:degree*m+1]
 		bs[k,:] = R \ (Q' * vs)
 	end
