@@ -1,13 +1,9 @@
 
 
-require("Distance")
-require("Iterators")
-
-
 module Loess
 
 import Iterators.product
-import Distance.euclidean
+import Distances.euclidean
 
 export loess, predict
 
