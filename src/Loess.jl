@@ -2,6 +2,8 @@
 
 module Loess
 
+using Compat
+
 import Iterators.product
 import Distances.euclidean
 
@@ -53,7 +55,7 @@ function loess{T <: FloatingPoint}(xs::AbstractMatrix{T}, ys::AbstractVector{T};
 	end
 
 	n, m = size(xs)
-	q = iceil(span * n)
+	q = ceil(Integer, (span * n))
 
 	# TODO: We need to keep track of how we are normalizing so we can
 	# corerctly apply predict to unnormalized data. We should have a normalize
@@ -223,7 +225,7 @@ end
 #
 function normalize!{T <: FloatingPoint}(xs::AbstractMatrix{T}, q::T=0.100000000000000000001)
 	n, m = size(xs)
-	cut = iceil(q * n)
+	cut = ceil(Integer, (q * n))
 	tmp = Array(T, n)
 	for j in 1:m
 		copy!(tmp, xs[:,j])

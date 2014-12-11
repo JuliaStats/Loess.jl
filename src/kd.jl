@@ -1,4 +1,4 @@
-
+using Compat
 
 # Simple static kd-trees.
 
@@ -50,7 +50,7 @@ function KDTree{T <: FloatingPoint}(xs::AbstractMatrix{T},
 	end
 	diam = diameter(bounds)
 
-	leaf_size_cutoff = iceil(leaf_size_factor * n)
+	leaf_size_cutoff = ceil(Integer, (leaf_size_factor * n))
 	leaf_diameter_cutoff = leaf_diameter_factor * diam
 	verts = Set{Vector{T}}()
 
