@@ -1,5 +1,9 @@
 # Loess
 
+[![Build Status](https://travis-ci.org/dcjones/Loess.jl.svg?branch=master)](https://travis-ci.org/dcjones/Loess.jl)
+[![Loess](http://pkg.julialang.org/badges/Loess_0.3.svg)](http://pkg.julialang.org/?pkg=Loess)
+[![Loess](http://pkg.julialang.org/badges/Loess_0.4.svg)](http://pkg.julialang.org/?pkg=Loess)
+
 This is a pure Julia loess implementation, based on the fast kd-tree based
 approximation described in the original Cleveland, et al papers, implemented
 in the netlib loess C/Fortran code, and used by many, including in R's loess
