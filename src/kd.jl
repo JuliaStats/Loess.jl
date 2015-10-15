@@ -6,7 +6,7 @@ using Compat
 abstract KDNode
 
 
-immutable KDTree{T <: FloatingPoint}
+immutable KDTree{T <: AbstractFloat}
 	# A matrix of n, m-dimensional observations
 	xs::AbstractMatrix{T}
 
@@ -36,7 +36,7 @@ end
 # Returns:
 #   A KDTree object
 #
-function KDTree{T <: FloatingPoint}(xs::AbstractMatrix{T},
+function KDTree{T <: AbstractFloat}(xs::AbstractMatrix{T},
 	                                leaf_size_factor=0.05,
 	                                leaf_diameter_factor=0.0)
 	n, m = size(xs)
@@ -70,7 +70,7 @@ immutable KDLeafNode <: KDNode
 end
 
 
-immutable KDInternalNode{T <: FloatingPoint} <: KDNode
+immutable KDInternalNode{T <: AbstractFloat} <: KDNode
 	j::Int # dimension on which the data is split
 	med::T # median value where the split occours
 	leftnode::KDNode

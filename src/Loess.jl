@@ -1,4 +1,4 @@
-VERSION >= v"0.4.0-dev+6641" && __precompile__()
+isdefined(Base, :__precompile__) && __precompile__()
 
 module Loess
 
@@ -12,7 +12,7 @@ export loess, predict
 include("kd.jl")
 
 
-type LoessModel{T <: FloatingPoint}
+type LoessModel{T <: AbstractFloat}
 	# An n by m predictor matrix containing n observations from m predictors
 	xs::AbstractMatrix{T}
 
@@ -42,13 +42,13 @@ end
 # Returns:
 #   A fit LoessModel.
 #
-function loess{T <: FloatingPoint}(xs::AbstractVector{T}, ys::AbstractVector{T};
+function loess{T <: AbstractFloat}(xs::AbstractVector{T}, ys::AbstractVector{T};
 	                            	   normalize::Bool=true, span::T=0.75, degree::Int=2)
 	loess(reshape(xs, (length(xs), 1)), ys, normalize=normalize, span=span, degree=degree)
 end
 
 
-function loess{T <: FloatingPoint}(xs::AbstractMatrix{T}, ys::AbstractVector{T};
+function loess{T <: AbstractFloat}(xs::AbstractMatrix{T}, ys::AbstractVector{T};
 	                               normalize::Bool=true, span::T=0.75, degree::Int=2)
 	if size(xs, 1) != size(ys, 1)
 		error("Predictor and response arrays must of the same length")
@@ -134,12 +134,12 @@ end
 # Returns:
 #   A length n' vector of predicted response values.
 #
-function predict{T <: FloatingPoint}(model::LoessModel{T}, z::T)
+function predict{T <: AbstractFloat}(model::LoessModel{T}, z::T)
 	predict(model, T[z])
 end
 
 
-function predict{T <: FloatingPoint}(model::LoessModel{T}, zs::AbstractVector{T})
+function predict{T <: AbstractFloat}(model::LoessModel{T}, zs::AbstractVector{T})
 	m = size(model.xs, 2)
 
 	# in the univariate case, interpret a non-singleton zs as vector of
@@ -172,7 +172,7 @@ function predict{T <: FloatingPoint}(model::LoessModel{T}, zs::AbstractVector{T}
 end
 
 
-function predict{T <: FloatingPoint}(model::LoessModel{T}, zs::AbstractMatrix{T})
+function predict{T <: AbstractFloat}(model::LoessModel{T}, zs::AbstractMatrix{T})
 	ys = Array(T, size(zs, 1))
 	for i in 1:size(zs, 1)
 		ys[i] = predict(model, vec(zs[i,:]))
@@ -223,7 +223,7 @@ end
 # Modifies:
 #   xs
 #
-function normalize!{T <: FloatingPoint}(xs::AbstractMatrix{T}, q::T=0.100000000000000000001)
+function normalize!{T <: AbstractFloat}(xs::AbstractMatrix{T}, q::T=0.100000000000000000001)
 	n, m = size(xs)
 	cut = ceil(Integer, (q * n))
 	tmp = Array(T, n)
