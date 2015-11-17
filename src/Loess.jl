@@ -175,6 +175,7 @@ end
 function predict{T <: AbstractFloat}(model::LoessModel{T}, zs::AbstractMatrix{T})
 	ys = Array(T, size(zs, 1))
 	for i in 1:size(zs, 1)
+		# the vec() here is not necessary on 0.5 anymore
 		ys[i] = predict(model, vec(zs[i,:]))
 	end
 	ys
@@ -204,7 +205,7 @@ function evalpoly(xs, bs)
 		x = xs[i]
 		xx = x
 		for l in 1:degree
-			y += xx * bs[i, 1 + (i-1)*degree + l]
+			y += xx * bs[1 + (i-1)*degree + l]
 			xx *= x
 		end
 	end

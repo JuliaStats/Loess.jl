@@ -10,7 +10,7 @@ ys = sin(xs) .+ 0.5 * rand(100)
 model = loess(xs, ys)
 
 us = collect(minimum(xs):0.1:maximum(xs))
-vs = predict(model, us) 
+vs = predict(model, us)
 
 @test minimum(vs) >= -1.1
 @test maximum(vs) <= +1.1
