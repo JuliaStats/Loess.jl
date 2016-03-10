@@ -6,6 +6,7 @@ using Compat
 
 import Iterators.product
 import Distances.euclidean
+import Base.normalize!
 
 export loess, predict
 
