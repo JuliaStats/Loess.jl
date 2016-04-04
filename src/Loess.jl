@@ -7,7 +7,7 @@ using Compat
 import Iterators.product
 import Distances.euclidean
 
-export loess, predict
+export loess, predict, residuals
 
 include("kd.jl")
 
@@ -179,6 +179,12 @@ function predict{T <: AbstractFloat}(model::LoessModel{T}, zs::AbstractMatrix{T}
 		ys[i] = predict(model, vec(zs[i,:]))
 	end
 	ys
+end
+
+
+function residuals(model::LoessModel)
+	yhat = predict(model, model.xs)
+	return yhat - model.ys
 end
 
 
