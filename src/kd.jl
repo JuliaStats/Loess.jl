@@ -1,4 +1,5 @@
 using Compat
+import Compat.view
 
 # Simple static kd-trees.
 
@@ -59,7 +60,7 @@ function KDTree{T <: AbstractFloat}(xs::AbstractMatrix{T},
 		push!(verts, T[vert...])
 	end
 
-	root = build_kdtree(xs, sub(perm, 1:n), bounds,
+	root = build_kdtree(xs, view(perm, 1:n), bounds,
 		                leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
 	KDTree(xs, collect(1:n), root, verts, bounds)
@@ -157,12 +158,12 @@ function build_kdtree{T}(xs::AbstractMatrix{T},
 
 	leftbounds = copy(bounds)
 	leftbounds[2, j] = med
-	leftnode = build_kdtree(xs, sub(perm, 1:mid1), bounds,
+	leftnode = build_kdtree(xs, view(perm, 1:mid1), bounds,
 		                    leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
 	rightbounds = copy(bounds)
 	rightbounds[1, j] = med
-	rightnode = build_kdtree(xs, sub(perm, mid2:length(perm)), bounds,
+	rightnode = build_kdtree(xs, view(perm, mid2:length(perm)), bounds,
 		                     leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
 	coords = Array(Array, m)
