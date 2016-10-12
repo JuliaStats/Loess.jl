@@ -1,6 +1,6 @@
 # Loess
 
-[![Build Status](https://travis-ci.org/dcjones/Loess.jl.svg?branch=master)](https://travis-ci.org/dcjones/Loess.jl)
+[![Build Status](https://travis-ci.org/JuliaStats/Loess.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/Loess.jl)
 [![Loess](http://pkg.julialang.org/badges/Loess_0.3.svg)](http://pkg.julialang.org/?pkg=Loess)
 [![Loess](http://pkg.julialang.org/badges/Loess_0.4.svg)](http://pkg.julialang.org/?pkg=Loess)
 
@@ -31,7 +31,7 @@ p = plot(x=xs, y=ys, Geom.point, Guide.xlabel("x"), Guide.ylabel("y"),
 draw(SVG("loess.svg", 6inch, 3inch), p)
 ```
 
-![Example Plot](http://dcjones.github.io/Loess.jl/loess.svg)
+![Example Plot](http://JuliaStats.github.io/Loess.jl/loess.svg)
 
 There's also a shortcut in Gadfly to draw these plots:
 
