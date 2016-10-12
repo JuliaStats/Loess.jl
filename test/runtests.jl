@@ -14,3 +14,9 @@ vs = predict(model, us)
 
 @test minimum(vs) >= -1.1
 @test maximum(vs) <= +1.1
+
+
+x = [13.0,14.0,14.35,15.0,16.0]
+y = [0.369486,  0.355579, 0.3545, 0.356952, 0.36883]
+model = loess(x,y)
+@test Loess.predict(model,x) ≈ y
