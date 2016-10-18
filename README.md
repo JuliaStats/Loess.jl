@@ -11,7 +11,7 @@ function.
 
 ## Synopsis
 
-`Loess` exports two function: `loess` and `predict`, that train and apply the model, respectively.
+`Loess` exports two functions: `loess` and `predict`, that train and apply the model, respectively.
 
 
 ```julia
