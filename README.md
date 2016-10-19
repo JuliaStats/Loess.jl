@@ -11,7 +11,7 @@ function.
 
 ## Synopsis
 
-`Loess` exports two function: `loess` and `predict`, than train and apply the model, respectively.
+`Loess` exports two functions: `loess` and `predict`, that train and apply the model, respectively.
 
 
 ```julia
@@ -43,4 +43,4 @@ plot(x=xs, y=ys, Geom.point, Geom.smooth, Guide.xlabel("x"), Guide.ylabel("y"))
 ## Status
 
 Multivariate regression is not yet fully implemented, but most of the parts
-are aready there, and wouldn't require too much additional work.
+are already there, and wouldn't require too much additional work.
