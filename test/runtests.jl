@@ -2,10 +2,11 @@
 # and does something sensible if it does.
 using Loess
 using Base.Test
+using Compat
 
 srand(100)
 xs = 10 .* rand(100)
-ys = sin(xs) .+ 0.5 * rand(100)
+ys = sin.(xs) .+ 0.5 * rand(100)
 
 model = loess(xs, ys)
 
