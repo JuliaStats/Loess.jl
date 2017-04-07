@@ -3,7 +3,7 @@ import Compat.view
 
 # Simple static kd-trees.
 
-abstract KDNode
+@compat abstract type KDNode end
 
 immutable KDLeafNode <: KDNode
 end
@@ -49,7 +49,7 @@ function KDTree{T <: AbstractFloat}(xs::AbstractMatrix{T},
     n, m = size(xs)
     perm = collect(1:n)
 
-    bounds = Array(T, (2, m))
+    bounds = Array{T}(2, m)
     for j in 1:m
 	col = xs[:,j]
 	bounds[1, j] = minimum(col)
@@ -169,7 +169,7 @@ function build_kdtree{T}(xs::AbstractMatrix{T},
     rightnode = build_kdtree(xs, view(perm,mid2:length(perm)), rightbounds,
 		             leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
-    coords = Array(Array, m)
+    coords = Array{Array}(m)
     for i in 1:m
 	if i == j
 	    coords[i] = [med]
