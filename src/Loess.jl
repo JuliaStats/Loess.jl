@@ -54,7 +54,7 @@ function loess{T <: AbstractFloat}(xs::AbstractMatrix{T}, ys::AbstractVector{T};
     end
 
     kdtree = KDTree(xs, 0.05 * span)
-    verts = Array(T, (length(kdtree.verts), m))
+    verts = Array{T}(length(kdtree.verts), m)
 
     # map verticies to their index in the bs coefficient matrix
     verts = Dict{Vector{T}, Int}()
@@ -63,13 +63,13 @@ function loess{T <: AbstractFloat}(xs::AbstractMatrix{T}, ys::AbstractVector{T};
     end
 
     # Fit each vertex
-    ds = Array(T, n) # distances
+    ds = Array{T}(n) # distances
     perm = collect(1:n)
-    bs = Array(T, length(kdtree.verts), 1 + degree * m)
+    bs = Array{T}(length(kdtree.verts), 1 + degree * m)
 
     # TODO: higher degree fitting
-    us = Array(T, q, 1 + degree * m)
-    vs = Array(T, q)
+    us = Array{T}(q, 1 + degree * m)
+    vs = Array{T}(q)
     for (vert, k) in verts
         # reset perm
 	for i in 1:n
@@ -164,7 +164,7 @@ end
 
 
 function predict{T <: AbstractFloat}(model::LoessModel{T}, zs::AbstractMatrix{T})
-	ys = Array(T, size(zs, 1))
+	ys = Array{T}(size(zs, 1))
 	for i in 1:size(zs, 1)
 		# the vec() here is not necessary on 0.5 anymore
 		ys[i] = predict(model, vec(zs[i,:]))
