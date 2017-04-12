@@ -1,8 +1,8 @@
 # Loess
 
 [![Build Status](https://travis-ci.org/JuliaStats/Loess.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/Loess.jl)
-[![Loess](http://pkg.julialang.org/badges/Loess_0.4.svg)](http://pkg.julialang.org/?pkg=Loess)
 [![Loess](http://pkg.julialang.org/badges/Loess_0.5.svg)](http://pkg.julialang.org/?pkg=Loess)
+[![Loess](http://pkg.julialang.org/badges/Loess_0.6.svg)](http://pkg.julialang.org/?pkg=Loess)
 
 This is a pure Julia loess implementation, based on the fast kd-tree based
 approximation described in the original Cleveland, et al papers, implemented
