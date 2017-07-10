@@ -4,7 +4,7 @@ module Loess
 
 using Compat
 
-import Iterators.product
+import IterTools.product
 import Distances.euclidean
 
 export loess, predict
