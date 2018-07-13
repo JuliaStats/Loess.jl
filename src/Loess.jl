@@ -3,10 +3,9 @@ __precompile__()
 
 module Loess
 
-using Compat
-
-import IterTools.product
 import Distances.euclidean
+
+using Statistics
 
 export loess, predict
 
@@ -55,7 +54,7 @@ function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
     end
 
     kdtree = KDTree(xs, 0.05 * span)
-    verts = Array{T}(length(kdtree.verts), m)
+    verts = Array{T}(undef, length(kdtree.verts), m)
 
     # map verticies to their index in the bs coefficient matrix
     verts = Dict{Vector{T}, Int}()
@@ -64,13 +63,13 @@ function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
     end
 
     # Fit each vertex
-    ds = Array{T}(n) # distances
+    ds = Array{T}(undef, n) # distances
     perm = collect(1:n)
-    bs = Array{T}(length(kdtree.verts), 1 + degree * m)
+    bs = Array{T}(undef, length(kdtree.verts), 1 + degree * m)
 
     # TODO: higher degree fitting
-    us = Array{T}(q, 1 + degree * m)
-    vs = Array{T}(q)
+    us = Array{T}(undef, q, 1 + degree * m)
+    vs = Array{T}(undef, q)
     for (vert, k) in verts
         # reset perm
 	for i in 1:n
@@ -83,7 +82,7 @@ function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
 	end
 
 	# copy the q nearest points to vert into X
-	select!(perm, q, by=i -> ds[i])
+	partialsort!(perm, q, by=i -> ds[i])
 	dmax = maximum([ds[perm[i]] for i = 1:q])
 
 	for i in 1:q
@@ -165,7 +164,7 @@ end
 
 
 function predict(model::LoessModel{T}, zs::AbstractMatrix{T}) where T <: AbstractFloat
-	ys = Array{T}(size(zs, 1))
+	ys = Array{T}(undef, size(zs, 1))
 	for i in 1:size(zs, 1)
 		# the vec() here is not necessary on 0.5 anymore
 		ys[i] = predict(model, vec(zs[i,:]))

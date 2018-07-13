@@ -1,6 +1,3 @@
-using Compat
-import Compat.view
-
 # Simple static kd-trees.
 
 abstract type KDNode end
@@ -49,11 +46,11 @@ function KDTree(xs::AbstractMatrix{T},
     n, m = size(xs)
     perm = collect(1:n)
 
-    bounds = Array{T}(2, m)
+    bounds = Array{T}(undef, 2, m)
     for j in 1:m
-	col = xs[:,j]
-	bounds[1, j] = minimum(col)
-	bounds[2, j] = maximum(col)
+	    col = xs[:,j]
+	    bounds[1, j] = minimum(col)
+	    bounds[2, j] = maximum(col)
     end
 
     diam = diameter(bounds)
@@ -63,7 +60,7 @@ function KDTree(xs::AbstractMatrix{T},
     verts = Set{Vector{T}}()
 
     # Add a vertex for each corner of the hypercube
-    for vert in product([bounds[:,j] for j in 1:m]...)
+    for vert in Iterators.product([bounds[:,j] for j in 1:m]...)
 	push!(verts, T[vert...])
     end
 
@@ -148,14 +145,14 @@ function build_kdtree(xs::AbstractMatrix{T},
     # find the median and partition
     if isodd(length(perm))
 	mid = length(perm) ÷ 2
-	select!(perm, mid, by=i -> xs[i, j])
+	partialsort!(perm, mid, by=i -> xs[i, j])
 	med = xs[perm[mid], j]
 	mid1 = mid
 	mid2 = mid + 1
     else
 	mid1 = length(perm) ÷ 2
 	mid2 = mid1 + 1
-	select!(perm, mid1:mid2, by=i -> xs[i, j])
+	partialsort!(perm, mid1:mid2, by=i -> xs[i, j])
 	med = (xs[perm[mid1], j] + xs[perm[mid2], j]) / 2
     end
 
@@ -169,16 +166,16 @@ function build_kdtree(xs::AbstractMatrix{T},
     rightnode = build_kdtree(xs, view(perm,mid2:length(perm)), rightbounds,
 		             leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
-    coords = Array{Array}(m)
+    coords = Array{Array}(undef, m)
     for i in 1:m
-	if i == j
-	    coords[i] = [med]
-	else
-	    coords[i] = bounds[:, i]
-	end
+		if i == j
+			coords[i] = [med]
+		else
+			coords[i] = bounds[:, i]
+		end
     end
 
-    for vert in product(coords...)
+    for vert in Iterators.product(coords...)
 	push!(verts, T[vert...])
     end
 
@@ -192,7 +189,7 @@ end
 Given a bounding hypecube `bounds`, return its verticies
 """
 function bounds_verts(bounds::Matrix)
-    collect(product([bounds[:, i] for i in 1:size(bounds, 2)]...))
+    collect(Iterators.product([bounds[:, i] for i in 1:size(bounds, 2)]...))
 end
 
 
