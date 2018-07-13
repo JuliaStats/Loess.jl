@@ -1,4 +1,5 @@
-isdefined(Base, :__precompile__) && __precompile__()
+__precompile__()
+
 
 module Loess
 
@@ -12,7 +13,7 @@ export loess, predict
 include("kd.jl")
 
 
-type LoessModel{T <: AbstractFloat}
+mutable struct LoessModel{T <: AbstractFloat}
     xs::AbstractMatrix{T} # An n by m predictor matrix containing n observations from m predictors
     ys::AbstractVector{T} # A length n response vector
     bs::Matrix{T}         # Least squares coefficients
@@ -37,8 +38,8 @@ Returns:
   A fit `LoessModel`.
 
 """
-function loess{T <: AbstractFloat}(xs::AbstractMatrix{T}, ys::AbstractVector{T};
-	                           normalize::Bool=true, span::T=0.75, degree::Int=2)
+function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
+           normalize::Bool=true, span::T=0.75, degree::Int=2) where T <: AbstractFloat
     if size(xs, 1) != size(ys, 1)
 	error("Predictor and response arrays must of the same length")
     end
@@ -105,8 +106,8 @@ function loess{T <: AbstractFloat}(xs::AbstractMatrix{T}, ys::AbstractVector{T};
     LoessModel{T}(xs, ys, bs, verts, kdtree)
 end
 
-function loess{T <: AbstractFloat}(xs::AbstractVector{T}, ys::AbstractVector{T};
-	                           normalize::Bool=true, span::T=0.75, degree::Int=2)
+function loess(xs::AbstractVector{T}, ys::AbstractVector{T};
+           normalize::Bool=true, span::T=0.75, degree::Int=2) where T <: AbstractFloat
     loess(reshape(xs, (length(xs), 1)), ys, normalize=normalize, span=span, degree=degree)
 end
 
@@ -125,12 +126,12 @@ end
 # Returns:
 #   A length n' vector of predicted response values.
 #
-function predict{T <: AbstractFloat}(model::LoessModel{T}, z::T)
+function predict(model::LoessModel{T}, z::T) where T <: AbstractFloat
 	predict(model, T[z])
 end
 
 
-function predict{T <: AbstractFloat}(model::LoessModel{T}, zs::AbstractVector{T})
+function predict(model::LoessModel{T}, zs::AbstractVector{T}) where T <: AbstractFloat
     m = size(model.xs, 2)
 
     # in the univariate case, interpret a non-singleton zs as vector of
@@ -163,7 +164,7 @@ function predict{T <: AbstractFloat}(model::LoessModel{T}, zs::AbstractVector{T}
 end
 
 
-function predict{T <: AbstractFloat}(model::LoessModel{T}, zs::AbstractMatrix{T})
+function predict(model::LoessModel{T}, zs::AbstractMatrix{T}) where T <: AbstractFloat
 	ys = Array{T}(size(zs, 1))
 	for i in 1:size(zs, 1)
 		# the vec() here is not necessary on 0.5 anymore
@@ -223,10 +224,10 @@ Args:
   `xs`: a matrix of predictors
   `q`: cut the ends of at quantiles `q` and `1-q`
 
-Modifies:
+odifies:
   `xs`
 """
-function tnormalize!{T <: AbstractFloat}(xs::AbstractMatrix{T}, q::T=0.1)
+function tnormalize!(xs::AbstractMatrix{T}, q::T=0.1) where T <: AbstractFloat
     n, m = size(xs)
     cut = ceil(Int, (q * n))
     for j in 1:m

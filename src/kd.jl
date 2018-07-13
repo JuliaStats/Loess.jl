@@ -3,12 +3,12 @@ import Compat.view
 
 # Simple static kd-trees.
 
-@compat abstract type KDNode end
+abstract type KDNode end
 
-immutable KDLeafNode <: KDNode
+struct KDLeafNode <: KDNode
 end
 
-immutable KDInternalNode{T <: AbstractFloat} <: KDNode
+struct KDInternalNode{T <: AbstractFloat} <: KDNode
     j::Int             # dimension on which the data is split
     med::T             # median value where the split occours
     leftnode::KDNode
@@ -16,7 +16,7 @@ immutable KDInternalNode{T <: AbstractFloat} <: KDNode
 end
 
 
-immutable KDTree{T <: AbstractFloat}
+struct KDTree{T <: AbstractFloat}
     xs::AbstractMatrix{T} # A matrix of n, m-dimensional observations
     perm::Vector{Int}     # permutation of data to avoid modifying xs
     root::KDNode          # root node
@@ -42,9 +42,9 @@ Returns:
   A `KDTree` object
 
 """
-function KDTree{T <: AbstractFloat}(xs::AbstractMatrix{T},
-	                                leaf_size_factor=0.05,
-	                                leaf_diameter_factor=0.0)
+function KDTree(xs::AbstractMatrix{T},
+                leaf_size_factor=0.05,
+                leaf_diameter_factor=0.0) where T <: AbstractFloat
 
     n, m = size(xs)
     perm = collect(1:n)
@@ -116,12 +116,12 @@ Modifies:
 Returns:
   Either a `KDLeafNode` or a `KDInternalNode`
 """
-function build_kdtree{T}(xs::AbstractMatrix{T},
-	                 perm::AbstractArray,
-	                 bounds::Matrix{T},
-	                 leaf_size_cutoff::Int,
-	                 leaf_diameter_cutoff::T,
-	                 verts::Set{Vector{T}})
+function build_kdtree(xs::AbstractMatrix{T},
+                  perm::AbstractArray,
+                  bounds::Matrix{T},
+                  leaf_size_cutoff::Int,
+                  leaf_diameter_cutoff::T,
+                  verts::Set{Vector{T}}) where T
     n, m = size(xs)
 
     if length(perm) <= leaf_size_cutoff || diameter(bounds) <= leaf_diameter_cutoff
@@ -202,7 +202,7 @@ end
 Traverse the tree `kdtree` to the bottom and return the verticies of
 the bounding hypercube of the leaf node containing the point `x`.
 """
-function traverse{T}(kdtree::KDTree{T}, x::AbstractVector{T})
+function traverse(kdtree::KDTree{T}, x::AbstractVector{T}) where T
     m = size(kdtree.bounds, 2)
 
     if length(x) != m
