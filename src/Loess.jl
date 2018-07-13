@@ -223,7 +223,7 @@ Args:
   `xs`: a matrix of predictors
   `q`: cut the ends of at quantiles `q` and `1-q`
 
-odifies:
+Modifies:
   `xs`
 """
 function tnormalize!(xs::AbstractMatrix{T}, q::T=0.1) where T <: AbstractFloat
