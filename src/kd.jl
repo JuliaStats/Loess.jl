@@ -48,9 +48,9 @@ function KDTree(xs::AbstractMatrix{T},
 
     bounds = Array{T}(undef, 2, m)
     for j in 1:m
-	    col = xs[:,j]
-	    bounds[1, j] = minimum(col)
-	    bounds[2, j] = maximum(col)
+	col = xs[:,j]
+	bounds[1, j] = minimum(col)
+	bounds[2, j] = maximum(col)
     end
 
     diam = diameter(bounds)
@@ -114,11 +114,11 @@ Returns:
   Either a `KDLeafNode` or a `KDInternalNode`
 """
 function build_kdtree(xs::AbstractMatrix{T},
-                  perm::AbstractArray,
-                  bounds::Matrix{T},
-                  leaf_size_cutoff::Int,
-                  leaf_diameter_cutoff::T,
-                  verts::Set{Vector{T}}) where T
+                      perm::AbstractArray,
+                      bounds::Matrix{T},
+                      leaf_size_cutoff::Int,
+                      leaf_diameter_cutoff::T,
+                      verts::Set{Vector{T}}) where T
     n, m = size(xs)
 
     if length(perm) <= leaf_size_cutoff || diameter(bounds) <= leaf_diameter_cutoff
@@ -168,11 +168,11 @@ function build_kdtree(xs::AbstractMatrix{T},
 
     coords = Array{Array}(undef, m)
     for i in 1:m
-		if i == j
-			coords[i] = [med]
-		else
-			coords[i] = bounds[:, i]
-		end
+	if i == j
+	    coords[i] = [med]
+	else
+	    coords[i] = bounds[:, i]
+	end
     end
 
     for vert in Iterators.product(coords...)
