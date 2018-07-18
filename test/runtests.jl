@@ -1,8 +1,9 @@
 # These tests don't do much except ensure that the package loads,
 # and does something sensible if it does.
 using Loess
-using Base.Test
-using Compat
+using Test
+using Random
+using Statistics
 
 srand(100)
 xs = 10 .* rand(100)

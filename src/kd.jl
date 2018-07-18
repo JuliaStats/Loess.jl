@@ -1,14 +1,11 @@
-using Compat
-import Compat.view
-
 # Simple static kd-trees.
 
-@compat abstract type KDNode end
+abstract type KDNode end
 
-immutable KDLeafNode <: KDNode
+struct KDLeafNode <: KDNode
 end
 
-immutable KDInternalNode{T <: AbstractFloat} <: KDNode
+struct KDInternalNode{T <: AbstractFloat} <: KDNode
     j::Int             # dimension on which the data is split
     med::T             # median value where the split occours
     leftnode::KDNode
@@ -16,7 +13,7 @@ immutable KDInternalNode{T <: AbstractFloat} <: KDNode
 end
 
 
-immutable KDTree{T <: AbstractFloat}
+struct KDTree{T <: AbstractFloat}
     xs::AbstractMatrix{T} # A matrix of n, m-dimensional observations
     perm::Vector{Int}     # permutation of data to avoid modifying xs
     root::KDNode          # root node
@@ -42,14 +39,14 @@ Returns:
   A `KDTree` object
 
 """
-function KDTree{T <: AbstractFloat}(xs::AbstractMatrix{T},
-	                                leaf_size_factor=0.05,
-	                                leaf_diameter_factor=0.0)
+function KDTree(xs::AbstractMatrix{T},
+                leaf_size_factor=0.05,
+                leaf_diameter_factor=0.0) where T <: AbstractFloat
 
     n, m = size(xs)
     perm = collect(1:n)
 
-    bounds = Array{T}(2, m)
+    bounds = Array{T}(undef, 2, m)
     for j in 1:m
 	col = xs[:,j]
 	bounds[1, j] = minimum(col)
@@ -63,7 +60,7 @@ function KDTree{T <: AbstractFloat}(xs::AbstractMatrix{T},
     verts = Set{Vector{T}}()
 
     # Add a vertex for each corner of the hypercube
-    for vert in product([bounds[:,j] for j in 1:m]...)
+    for vert in Iterators.product([bounds[:,j] for j in 1:m]...)
 	push!(verts, T[vert...])
     end
 
@@ -116,12 +113,12 @@ Modifies:
 Returns:
   Either a `KDLeafNode` or a `KDInternalNode`
 """
-function build_kdtree{T}(xs::AbstractMatrix{T},
-	                 perm::AbstractArray,
-	                 bounds::Matrix{T},
-	                 leaf_size_cutoff::Int,
-	                 leaf_diameter_cutoff::T,
-	                 verts::Set{Vector{T}})
+function build_kdtree(xs::AbstractMatrix{T},
+                      perm::AbstractArray,
+                      bounds::Matrix{T},
+                      leaf_size_cutoff::Int,
+                      leaf_diameter_cutoff::T,
+                      verts::Set{Vector{T}}) where T
     n, m = size(xs)
 
     if length(perm) <= leaf_size_cutoff || diameter(bounds) <= leaf_diameter_cutoff
@@ -148,14 +145,14 @@ function build_kdtree{T}(xs::AbstractMatrix{T},
     # find the median and partition
     if isodd(length(perm))
 	mid = length(perm) ÷ 2
-	select!(perm, mid, by=i -> xs[i, j])
+	partialsort!(perm, mid, by=i -> xs[i, j])
 	med = xs[perm[mid], j]
 	mid1 = mid
 	mid2 = mid + 1
     else
 	mid1 = length(perm) ÷ 2
 	mid2 = mid1 + 1
-	select!(perm, mid1:mid2, by=i -> xs[i, j])
+	partialsort!(perm, mid1:mid2, by=i -> xs[i, j])
 	med = (xs[perm[mid1], j] + xs[perm[mid2], j]) / 2
     end
 
@@ -169,7 +166,7 @@ function build_kdtree{T}(xs::AbstractMatrix{T},
     rightnode = build_kdtree(xs, view(perm,mid2:length(perm)), rightbounds,
 		             leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
-    coords = Array{Array}(m)
+    coords = Array{Array}(undef, m)
     for i in 1:m
 	if i == j
 	    coords[i] = [med]
@@ -178,7 +175,7 @@ function build_kdtree{T}(xs::AbstractMatrix{T},
 	end
     end
 
-    for vert in product(coords...)
+    for vert in Iterators.product(coords...)
 	push!(verts, T[vert...])
     end
 
@@ -192,7 +189,7 @@ end
 Given a bounding hypecube `bounds`, return its verticies
 """
 function bounds_verts(bounds::Matrix)
-    collect(product([bounds[:, i] for i in 1:size(bounds, 2)]...))
+    collect(Iterators.product([bounds[:, i] for i in 1:size(bounds, 2)]...))
 end
 
 
@@ -202,7 +199,7 @@ end
 Traverse the tree `kdtree` to the bottom and return the verticies of
 the bounding hypercube of the leaf node containing the point `x`.
 """
-function traverse{T}(kdtree::KDTree{T}, x::AbstractVector{T})
+function traverse(kdtree::KDTree{T}, x::AbstractVector{T}) where T
     m = size(kdtree.bounds, 2)
 
     if length(x) != m

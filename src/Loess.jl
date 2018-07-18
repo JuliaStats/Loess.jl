@@ -1,18 +1,18 @@
-isdefined(Base, :__precompile__) && __precompile__()
+__precompile__()
+
 
 module Loess
 
-using Compat
-
-import IterTools.product
 import Distances.euclidean
+
+using Statistics
 
 export loess, predict
 
 include("kd.jl")
 
 
-type LoessModel{T <: AbstractFloat}
+mutable struct LoessModel{T <: AbstractFloat}
     xs::AbstractMatrix{T} # An n by m predictor matrix containing n observations from m predictors
     ys::AbstractVector{T} # A length n response vector
     bs::Matrix{T}         # Least squares coefficients
@@ -37,8 +37,8 @@ Returns:
   A fit `LoessModel`.
 
 """
-function loess{T <: AbstractFloat}(xs::AbstractMatrix{T}, ys::AbstractVector{T};
-	                           normalize::Bool=true, span::T=0.75, degree::Int=2)
+function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
+           normalize::Bool=true, span::T=0.75, degree::Int=2) where T <: AbstractFloat
     if size(xs, 1) != size(ys, 1)
 	error("Predictor and response arrays must of the same length")
     end
@@ -54,7 +54,7 @@ function loess{T <: AbstractFloat}(xs::AbstractMatrix{T}, ys::AbstractVector{T};
     end
 
     kdtree = KDTree(xs, 0.05 * span)
-    verts = Array{T}(length(kdtree.verts), m)
+    verts = Array{T}(undef, length(kdtree.verts), m)
 
     # map verticies to their index in the bs coefficient matrix
     verts = Dict{Vector{T}, Int}()
@@ -63,13 +63,13 @@ function loess{T <: AbstractFloat}(xs::AbstractMatrix{T}, ys::AbstractVector{T};
     end
 
     # Fit each vertex
-    ds = Array{T}(n) # distances
+    ds = Array{T}(undef, n) # distances
     perm = collect(1:n)
-    bs = Array{T}(length(kdtree.verts), 1 + degree * m)
+    bs = Array{T}(undef, length(kdtree.verts), 1 + degree * m)
 
     # TODO: higher degree fitting
-    us = Array{T}(q, 1 + degree * m)
-    vs = Array{T}(q)
+    us = Array{T}(undef, q, 1 + degree * m)
+    vs = Array{T}(undef, q)
     for (vert, k) in verts
         # reset perm
 	for i in 1:n
@@ -82,7 +82,7 @@ function loess{T <: AbstractFloat}(xs::AbstractMatrix{T}, ys::AbstractVector{T};
 	end
 
 	# copy the q nearest points to vert into X
-	select!(perm, q, by=i -> ds[i])
+	partialsort!(perm, q, by=i -> ds[i])
 	dmax = maximum([ds[perm[i]] for i = 1:q])
 
 	for i in 1:q
@@ -105,8 +105,8 @@ function loess{T <: AbstractFloat}(xs::AbstractMatrix{T}, ys::AbstractVector{T};
     LoessModel{T}(xs, ys, bs, verts, kdtree)
 end
 
-function loess{T <: AbstractFloat}(xs::AbstractVector{T}, ys::AbstractVector{T};
-	                           normalize::Bool=true, span::T=0.75, degree::Int=2)
+function loess(xs::AbstractVector{T}, ys::AbstractVector{T};
+           normalize::Bool=true, span::T=0.75, degree::Int=2) where T <: AbstractFloat
     loess(reshape(xs, (length(xs), 1)), ys, normalize=normalize, span=span, degree=degree)
 end
 
@@ -125,12 +125,12 @@ end
 # Returns:
 #   A length n' vector of predicted response values.
 #
-function predict{T <: AbstractFloat}(model::LoessModel{T}, z::T)
+function predict(model::LoessModel{T}, z::T) where T <: AbstractFloat
 	predict(model, T[z])
 end
 
 
-function predict{T <: AbstractFloat}(model::LoessModel{T}, zs::AbstractVector{T})
+function predict(model::LoessModel{T}, zs::AbstractVector{T}) where T <: AbstractFloat
     m = size(model.xs, 2)
 
     # in the univariate case, interpret a non-singleton zs as vector of
@@ -163,8 +163,8 @@ function predict{T <: AbstractFloat}(model::LoessModel{T}, zs::AbstractVector{T}
 end
 
 
-function predict{T <: AbstractFloat}(model::LoessModel{T}, zs::AbstractMatrix{T})
-	ys = Array{T}(size(zs, 1))
+function predict(model::LoessModel{T}, zs::AbstractMatrix{T}) where T <: AbstractFloat
+	ys = Array{T}(undef, size(zs, 1))
 	for i in 1:size(zs, 1)
 		# the vec() here is not necessary on 0.5 anymore
 		ys[i] = predict(model, vec(zs[i,:]))
@@ -226,7 +226,7 @@ Args:
 Modifies:
   `xs`
 """
-function tnormalize!{T <: AbstractFloat}(xs::AbstractMatrix{T}, q::T=0.1)
+function tnormalize!(xs::AbstractMatrix{T}, q::T=0.1) where T <: AbstractFloat
     n, m = size(xs)
     cut = ceil(Int, (q * n))
     for j in 1:m
