@@ -5,7 +5,7 @@ using Test
 using Random
 using Statistics
 
-srand(100)
+Random.seed!(100)
 xs = 10 .* rand(100)
 ys = sin.(xs) .+ 0.5 * rand(100)
 
