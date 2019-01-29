@@ -39,7 +39,7 @@ function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
                span::AbstractFloat=0.75,
                degree::Integer=2) where T<:AbstractFloat
     if size(xs, 1) != size(ys, 1)
-        error("Predictor and response arrays must of the same length")
+        throw(DimensionMismatch("Predictor and response arrays must of the same length"))
     end
 
     n, m = size(xs)
