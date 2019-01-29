@@ -48,9 +48,9 @@ function KDTree(xs::AbstractMatrix{T},
 
     bounds = Array{T}(undef, 2, m)
     for j in 1:m
-	col = xs[:,j]
-	bounds[1, j] = minimum(col)
-	bounds[2, j] = maximum(col)
+        col = xs[:,j]
+        bounds[1, j] = minimum(col)
+        bounds[2, j] = maximum(col)
     end
 
     diam = diameter(bounds)
@@ -61,11 +61,10 @@ function KDTree(xs::AbstractMatrix{T},
 
     # Add a vertex for each corner of the hypercube
     for vert in Iterators.product([bounds[:,j] for j in 1:m]...)
-	push!(verts, T[vert...])
+        push!(verts, T[vert...])
     end
 
-    root = build_kdtree(xs, perm, bounds,
-		        leaf_size_cutoff, leaf_diameter_cutoff, verts)
+    root = build_kdtree(xs, perm, bounds, leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
     KDTree(xs, collect(1:n), root, verts, bounds)
 end
@@ -122,7 +121,7 @@ function build_kdtree(xs::AbstractMatrix{T},
     n, m = size(xs)
 
     if length(perm) <= leaf_size_cutoff || diameter(bounds) <= leaf_diameter_cutoff
-	return KDLeafNode()
+        return KDLeafNode()
     end
 
     # split on the dimension with the largest spread
@@ -130,53 +129,53 @@ function build_kdtree(xs::AbstractMatrix{T},
     j = 1
     maxspread = 0
     for k in 1:m
-	xmin = Inf
-	xmax = -Inf
-	for i in perm
-	    xmin = min(xmin, xs[i, k])
-	    xmax = max(xmax, xs[i, k])
-	end
-	if xmax - xmin > maxspread
-	    maxspread = xmax - xmin
-	    j = k
-	end
+        xmin = Inf
+        xmax = -Inf
+        for i in perm
+            xmin = min(xmin, xs[i, k])
+            xmax = max(xmax, xs[i, k])
+        end
+        if xmax - xmin > maxspread
+            maxspread = xmax - xmin
+            j = k
+        end
     end
 
     # find the median and partition
     if isodd(length(perm))
-	mid = length(perm) ÷ 2
-	partialsort!(perm, mid, by=i -> xs[i, j])
-	med = xs[perm[mid], j]
-	mid1 = mid
-	mid2 = mid + 1
+        mid = length(perm) ÷ 2
+        partialsort!(perm, mid, by=i -> xs[i, j])
+        med = xs[perm[mid], j]
+        mid1 = mid
+        mid2 = mid + 1
     else
-	mid1 = length(perm) ÷ 2
-	mid2 = mid1 + 1
-	partialsort!(perm, mid1:mid2, by=i -> xs[i, j])
-	med = (xs[perm[mid1], j] + xs[perm[mid2], j]) / 2
+        mid1 = length(perm) ÷ 2
+        mid2 = mid1 + 1
+        partialsort!(perm, mid1:mid2, by=i -> xs[i, j])
+        med = (xs[perm[mid1], j] + xs[perm[mid2], j]) / 2
     end
 
     leftbounds = copy(bounds)
     leftbounds[2, j] = med
     leftnode = build_kdtree(xs, view(perm,1:mid1), leftbounds,
-		            leaf_size_cutoff, leaf_diameter_cutoff, verts)
+                            leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
     rightbounds = copy(bounds)
     rightbounds[1, j] = med
     rightnode = build_kdtree(xs, view(perm,mid2:length(perm)), rightbounds,
-		             leaf_size_cutoff, leaf_diameter_cutoff, verts)
+                             leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
     coords = Array{Array}(undef, m)
     for i in 1:m
-	if i == j
-	    coords[i] = [med]
-	else
-	    coords[i] = bounds[:, i]
-	end
+        if i == j
+            coords[i] = [med]
+        else
+            coords[i] = bounds[:, i]
+        end
     end
 
     for vert in Iterators.product(coords...)
-	push!(verts, T[vert...])
+        push!(verts, T[vert...])
     end
 
     KDInternalNode{T}(j, med, leftnode, rightnode)
@@ -203,30 +202,30 @@ function traverse(kdtree::KDTree{T}, x::AbstractVector{T}) where T
     m = size(kdtree.bounds, 2)
 
     if length(x) != m
-	throw(DimensionMismatch("$(m)-dimensional kd-tree searched with a length $(length(x)) vector."))
+        throw(DimensionMismatch("$(m)-dimensional kd-tree searched with a length $(length(x)) vector."))
     end
 
     for j in 1:m
-	if x[j] < kdtree.bounds[1, j] || x[j] > kdtree.bounds[2, j]
-	    error(
-		  """
-		  Loess cannot perform extrapolation. Predict can only be applied
-		  to points within the bounding hypercube of the data used to train
-		  the model.
-		  """)
-	end
+        if x[j] < kdtree.bounds[1, j] || x[j] > kdtree.bounds[2, j]
+            error(
+                  """
+                  Loess cannot perform extrapolation. Predict can only be applied
+                  to points within the bounding hypercube of the data used to train
+                  the model.
+                  """)
+        end
     end
 
     bounds = copy(kdtree.bounds)
     node = kdtree.root
     while !isa(node, KDLeafNode)
-	if x[node.j] <= node.med
-	    bounds[2, node.j] = node.med
-	    node = node.leftnode
-	else
-	    bounds[1, node.j] = node.med
-	    node = node.rightnode
-	end
+        if x[node.j] <= node.med
+            bounds[2, node.j] = node.med
+            node = node.leftnode
+        else
+            bounds[1, node.j] = node.med
+            node = node.rightnode
+        end
     end
 
     bounds_verts(bounds)

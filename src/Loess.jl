@@ -40,7 +40,7 @@ Returns:
 function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
            normalize::Bool=true, span::T=0.75, degree::Int=2) where T <: AbstractFloat
     if size(xs, 1) != size(ys, 1)
-	error("Predictor and response arrays must of the same length")
+        error("Predictor and response arrays must of the same length")
     end
 
     n, m = size(xs)
@@ -50,7 +50,7 @@ function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
     # correctly apply predict to unnormalized data. We should have a normalize
     # function that just returns a vector of scaling factors.
     if normalize && m > 1
-	xs = tnormalize!(copy(xs))
+        xs = tnormalize!(copy(xs))
     end
 
     kdtree = KDTree(xs, 0.05 * span)
@@ -59,7 +59,7 @@ function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
     # map verticies to their index in the bs coefficient matrix
     verts = Dict{Vector{T}, Int}()
     for (k, vert) in enumerate(kdtree.verts)
-	verts[vert] = k
+        verts[vert] = k
     end
 
     # Fit each vertex
@@ -72,34 +72,34 @@ function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
     vs = Array{T}(undef, q)
     for (vert, k) in verts
         # reset perm
-	for i in 1:n
-	    perm[i] = i
-	end
+        for i in 1:n
+            perm[i] = i
+        end
 
         # distance to each point
-	for i in 1:n
-	    ds[i] = euclidean(vec(vert), vec(xs[i,:]))
-	end
+        for i in 1:n
+            ds[i] = euclidean(vec(vert), vec(xs[i,:]))
+        end
 
-	# copy the q nearest points to vert into X
-	partialsort!(perm, q, by=i -> ds[i])
-	dmax = maximum([ds[perm[i]] for i = 1:q])
+        # copy the q nearest points to vert into X
+        partialsort!(perm, q, by=i -> ds[i])
+        dmax = maximum([ds[perm[i]] for i = 1:q])
 
-	for i in 1:q
+        for i in 1:q
             pi = perm[i]
-	    w = tricubic(ds[pi] / dmax)
-	    us[i,1] = w
-	    for j in 1:m
-		x = xs[pi, j]
-		wxl = w
-		for l in 1:degree
+            w = tricubic(ds[pi] / dmax)
+            us[i,1] = w
+            for j in 1:m
+                x = xs[pi, j]
+                wxl = w
+                for l in 1:degree
                     wxl *= x
-		    us[i, 1 + (j-1)*degree + l] = wxl # w*x^l
-		end
-	    end
-	    vs[i] = ys[pi] * w
-	end
-	bs[k,:] = us \ vs
+                    us[i, 1 + (j-1)*degree + l] = wxl # w*x^l
+                end
+            end
+            vs[i] = ys[pi] * w
+        end
+        bs[k,:] = us \ vs
     end
 
     LoessModel{T}(xs, ys, bs, verts, kdtree)
@@ -126,7 +126,7 @@ end
 #   A length n' vector of predicted response values.
 #
 function predict(model::LoessModel{T}, z::T) where T <: AbstractFloat
-	predict(model, T[z])
+    predict(model, T[z])
 end
 
 
@@ -136,40 +136,40 @@ function predict(model::LoessModel{T}, zs::AbstractVector{T}) where T <: Abstrac
     # in the univariate case, interpret a non-singleton zs as vector of
     # ponits, not one point
     if m == 1 && length(zs) > 1
-	return predict(model, reshape(zs, (length(zs), 1)))
+        return predict(model, reshape(zs, (length(zs), 1)))
     end
 
     if length(zs) != m
-	error("$(m)-dimensional model applied to length $(length(zs)) vector")
+        error("$(m)-dimensional model applied to length $(length(zs)) vector")
     end
 
     adjacent_verts = traverse(model.kdtree, zs)
 
     if m == 1
-	@assert(length(adjacent_verts) == 2)
-	z = zs[1]
-	u = (z - adjacent_verts[1][1]) /
-	(adjacent_verts[2][1] - adjacent_verts[1][1])
+        @assert(length(adjacent_verts) == 2)
+        z = zs[1]
+        u = (z - adjacent_verts[1][1]) /
+        (adjacent_verts[2][1] - adjacent_verts[1][1])
 
-	y1 = evalpoly(zs, model.bs[model.verts[[adjacent_verts[1][1]]],:])
-	y2 = evalpoly(zs, model.bs[model.verts[[adjacent_verts[2][1]]],:])
-	return (1.0 - u) * y1 + u * y2
+        y1 = evalpoly(zs, model.bs[model.verts[[adjacent_verts[1][1]]],:])
+        y2 = evalpoly(zs, model.bs[model.verts[[adjacent_verts[2][1]]],:])
+        return (1.0 - u) * y1 + u * y2
     else
-	error("Multivariate blending not yet implemented")
-	# TODO:
-	#   1. Univariate linear interpolation between adjacent verticies.
-	#   2. Blend these estimates. (I'm not sure how this is done.)
+        error("Multivariate blending not yet implemented")
+        # TODO:
+        #   1. Univariate linear interpolation between adjacent verticies.
+        #   2. Blend these estimates. (I'm not sure how this is done.)
     end
 end
 
 
 function predict(model::LoessModel{T}, zs::AbstractMatrix{T}) where T <: AbstractFloat
-	ys = Array{T}(undef, size(zs, 1))
-	for i in 1:size(zs, 1)
-		# the vec() here is not necessary on 0.5 anymore
-		ys[i] = predict(model, vec(zs[i,:]))
-	end
-	ys
+    ys = Array{T}(undef, size(zs, 1))
+    for i in 1:size(zs, 1)
+        # the vec() here is not necessary on 0.5 anymore
+        ys[i] = predict(model, vec(zs[i,:]))
+    end
+    ys
 end
 
 """
@@ -201,13 +201,13 @@ function evalpoly(xs, bs)
     degree = div(length(bs) - 1, m)
     y = bs[1]
     for i in 1:m
-	x = xs[i]
+        x = xs[i]
         xx = x
         y += xx * bs[1 + (i-1)*degree + 1]
-	for l in 2:degree
+        for l in 2:degree
             xx *= x
-	    y += xx * bs[1 + (i-1)*degree + l]
-	end
+            y += xx * bs[1 + (i-1)*degree + l]
+        end
     end
     y
 end
@@ -230,8 +230,8 @@ function tnormalize!(xs::AbstractMatrix{T}, q::T=0.1) where T <: AbstractFloat
     n, m = size(xs)
     cut = ceil(Int, (q * n))
     for j in 1:m
-	tmp = sort!(xs[:,j])
-	xs[:,j] ./= mean(tmp[cut+1:n-cut])
+        tmp = sort!(xs[:,j])
+        xs[:,j] ./= mean(tmp[cut+1:n-cut])
     end
     xs
 end
