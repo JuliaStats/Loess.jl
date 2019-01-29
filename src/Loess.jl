@@ -38,7 +38,9 @@ Returns:
 
 """
 function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
-           normalize::Bool=true, span::T=0.75, degree::Int=2) where T <: AbstractFloat
+               normalize::Bool=true,
+               span::AbstractFloat=0.75,
+               degree::Integer=2) where T<:AbstractFloat
     if size(xs, 1) != size(ys, 1)
         error("Predictor and response arrays must of the same length")
     end
@@ -105,11 +107,13 @@ function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
     LoessModel{T}(xs, ys, bs, verts, kdtree)
 end
 
-function loess(xs::AbstractVector{T}, ys::AbstractVector{T};
-           normalize::Bool=true, span::T=0.75, degree::Int=2) where T <: AbstractFloat
-    loess(reshape(xs, (length(xs), 1)), ys, normalize=normalize, span=span, degree=degree)
-end
+loess(xs::AbstractVector{T}, ys::AbstractVector{T}; kwargs...) where {T<:AbstractFloat} =
+    loess(reshape(xs, (length(xs), 1)), ys; kwargs...)
 
+function loess(xs::AbstractArray{T,N}, ys::AbstractVector{S}; kwargs...) where {T,N,S}
+    R = float(promote_type(T, S))
+    loess(convert(AbstractArray{R,N}, xs), convert(AbstractVector{R}, ys); kwargs...)
+end
 
 
 # Predict response values from a trained loess model and predictor observations.
