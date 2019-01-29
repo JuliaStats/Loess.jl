@@ -22,3 +22,13 @@ x = [13.0,14.0,14.35,15.0,16.0]
 y = [0.369486,  0.355579, 0.3545, 0.356952, 0.36883]
 model = loess(x,y)
 @test Loess.predict(model,x) ≈ y
+
+let x = 1:10, y = sin.(1:10)
+    model = loess(x, y)
+    @test model.xs == reshape(collect(Float64, 1:10), 10, 1)
+    @test model.ys == y
+    pred = [1.02866, 0.798561, 0.533528, 0.253913, -0.0325918, -0.319578, -0.648763]
+    @test predict(model, 1.0:0.5:4.0) ≈ pred atol=1e-5
+end
+
+@test_throws DimensionMismatch loess([1.0 2.0; 3.0 4.0], [1.0])
