@@ -1,8 +1,6 @@
 # Loess
 
 [![Build Status](https://travis-ci.org/JuliaStats/Loess.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/Loess.jl)
-[![Loess](http://pkg.julialang.org/badges/Loess_0.6.svg)](http://pkg.julialang.org/?pkg=Loess)
-[![Loess](http://pkg.julialang.org/badges/Loess_0.7.svg)](http://pkg.julialang.org/?pkg=Loess)
 
 This is a pure Julia loess implementation, based on the fast kd-tree based
 approximation described in the original Cleveland, et al papers, implemented
@@ -18,11 +16,11 @@ function.
 using Loess
 
 xs = 10 .* rand(100)
-ys = sin(xs) .+ 0.5 * rand(100)
+ys = sin.(xs) .+ 0.5 * rand(100)
 
 model = loess(xs, ys)
 
-us = collect(minimum(xs):0.1:maximum(xs))
+us = range(extrema(xs)...; step = 0.1)
 vs = predict(model, us)
 
 using Gadfly
