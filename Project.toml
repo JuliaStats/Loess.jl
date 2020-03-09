@@ -1,9 +1,14 @@
 name = "Loess"
 uuid = "4345ca2d-374a-55d4-8d30-97f9976e7612"
+version = "0.5.1"
 
 [deps]
 Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
+[compat]
+julia = "0.7, 1"
+Distances = "0.7, 0.8"
 
 [extras]
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
