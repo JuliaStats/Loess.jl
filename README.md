@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/JuliaStats/Loess.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/Loess.jl)
 
 This is a pure Julia loess implementation, based on the fast kd-tree based
-approximation described in the original Cleveland, et al papers, implemented
+approximation described in the original Cleveland, et al papers[1], implemented
 in the netlib loess C/Fortran code, and used by many, including in R's loess
 function.
 
@@ -42,3 +42,7 @@ plot(x=xs, y=ys, Geom.point, Geom.smooth, Guide.xlabel("x"), Guide.ylabel("y"))
 
 Multivariate regression is not yet fully implemented, but most of the parts
 are already there, and wouldn't require too much additional work.
+
+## References
+
+[1] William S. Cleveland & Susan J. Devlin (1988) Locally Weighted Regression: An Approach to Regression Analysis by Local Fitting, Journal of the American Statistical Association, 83:403, 596-610, DOI: 10.1080/01621459.1988.10478639
