@@ -2,7 +2,7 @@ module Loess
 
 import Distances.euclidean
 
-using Statistics
+using Statistics, LinearAlgebra
 
 export loess, predict
 
@@ -44,6 +44,9 @@ function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
 
     n, m = size(xs)
     q = ceil(Int, (span * n))
+    if q < degree + 1
+        throw(ArgumentError("neighborhood size must be larger than degree+1=$(degree + 1) but was $q. Try increasing the value of span."))
+    end
 
     # TODO: We need to keep track of how we are normalizing so we can
     # correctly apply predict to unnormalized data. We should have a normalize
@@ -53,7 +56,6 @@ function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
     end
 
     kdtree = KDTree(xs, 0.05 * span)
-    verts = Array{T}(undef, length(kdtree.verts), m)
 
     # map verticies to their index in the bs coefficient matrix
     verts = Dict{Vector{T}, Int}()
@@ -69,6 +71,7 @@ function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
     # TODO: higher degree fitting
     us = Array{T}(undef, q, 1 + degree * m)
     vs = Array{T}(undef, q)
+
     for (vert, k) in verts
         # reset perm
         for i in 1:n
@@ -85,20 +88,22 @@ function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
         dmax = maximum([ds[perm[i]] for i = 1:q])
 
         for i in 1:q
-            pi = perm[i]
-            w = tricubic(ds[pi] / dmax)
+            pᵢ = perm[i]
+            w = tricubic(ds[pᵢ] / dmax)
             us[i,1] = w
             for j in 1:m
-                x = xs[pi, j]
+                x = xs[pᵢ, j]
                 wxl = w
                 for l in 1:degree
                     wxl *= x
-                    us[i, 1 + (j-1)*degree + l] = wxl # w*x^l
+                    us[i, 1 + (j - 1)*degree + l] = wxl # w*x^l
                 end
             end
-            vs[i] = ys[pi] * w
+            vs[i] = ys[pᵢ] * w
         end
-        bs[k,:] = us \ vs
+
+        F = qr(us, Val(true))
+        bs[k,:] = F\vs
     end
 
     LoessModel{T}(xs, ys, bs, verts, kdtree)
@@ -149,11 +154,16 @@ function predict(model::LoessModel{T}, zs::AbstractVector{T}) where T <: Abstrac
     if m == 1
         @assert(length(adjacent_verts) == 2)
         z = zs[1]
-        u = (z - adjacent_verts[1][1]) /
-        (adjacent_verts[2][1] - adjacent_verts[1][1])
+        v₁, v₂ = adjacent_verts[1][1], adjacent_verts[2][1]
 
-        y1 = evalpoly(zs, model.bs[model.verts[[adjacent_verts[1][1]]],:])
-        y2 = evalpoly(zs, model.bs[model.verts[[adjacent_verts[2][1]]],:])
+        if z == v₁ || z == v₂
+            return evalpoly(zs, model.bs[model.verts[[z]],:])
+        end
+
+        u = (z - v₁)/(v₂ - v₁)
+
+        y1 = evalpoly(zs, model.bs[model.verts[[v₁]],:])
+        y2 = evalpoly(zs, model.bs[model.verts[[v₂]],:])
         return (1.0 - u) * y1 + u * y2
     else
         error("Multivariate blending not yet implemented")
