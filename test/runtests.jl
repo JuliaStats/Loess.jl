@@ -32,3 +32,24 @@ let x = 1:10, y = sin.(1:10)
 end
 
 @test_throws DimensionMismatch loess([1.0 2.0; 3.0 4.0], [1.0])
+
+@testset "Issue 28" begin
+    @testset "Example 1" begin
+        x = [1.0, 2.0, 3.0, 4.0]
+        y = [1.0, 2.0, 3.0, 4.0]
+        @test_throws ArgumentError("neighborhood size must be larger than degree+1=3 but was 1. Try increasing the value of span.") loess(x, y, span = 0.25)
+        @test_throws ArgumentError("neighborhood size must be larger than degree+1=3 but was 2. Try increasing the value of span.") loess(x, y, span = 0.33)
+        @test predict(loess(x, y), x) ≈ x
+    end
+
+    @testset "Example 2" begin
+        x = [1.0, 1.0, 2.0, 3.0, 4.0, 4.0]
+        y = [1.0, 1.0, 2.0, 3.0, 4.0, 4.0]
+        @test_throws ArgumentError("neighborhood size must be larger than degree+1=3 but was 2. Try increasing the value of span.") loess(x, y, span = 0.33)
+        # For 0.4 and 0.5 these current don't hit the middle values. I suspect
+        # the issue is related to the ties in x.
+        @test_broken predict(loess(x, y, span = 0.4), x) ≈ x
+        @test_broken predict(loess(x, y, span = 0.5), x) ≈ x
+        @test predict(loess(x, y, span = 0.6), x) ≈ x
+    end
+end

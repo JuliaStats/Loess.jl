@@ -143,7 +143,7 @@ function build_kdtree(xs::AbstractMatrix{T},
 
     # find the median and partition
     if isodd(length(perm))
-        mid = length(perm) ÷ 2
+        mid = (length(perm) + 1) ÷ 2
         partialsort!(perm, mid, by=i -> xs[i, j])
         med = xs[perm[mid], j]
         mid1 = mid
