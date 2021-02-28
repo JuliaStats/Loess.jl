@@ -9,7 +9,7 @@ function.
 
 ## Synopsis
 
-`Loess` exports two functions, `loess` and `predict`, that train and apply the model, respectively. The degree of smoothing is mainly controlled by the `span` keyword argument. E.g.:
+`Loess` exports two functions, `loess` and `predict`, that train and apply the model, respectively. The amount of smoothing is mainly controlled by the `span` keyword argument. E.g.:
 
 
 ```julia
