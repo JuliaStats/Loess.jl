@@ -18,7 +18,7 @@ mutable struct LoessModel{T <: AbstractFloat}
 end
 
 """
-    loess(xs, ys, normalize=true, span=0.75, degreee=2)
+    loess(xs, ys, normalize=true, span=0.75, degree=2)
 
 Fit a loess model.
 
