@@ -1,6 +1,6 @@
 # Loess
 
-[![Build Status](https://travis-ci.org/JuliaStats/Loess.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/Loess.jl)
+[![CI](https://github.com/JuliaStats/Loess.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/JuliaStats/Loess.jl/actions/workflows/ci.yml)
 
 This is a pure Julia loess implementation, based on the fast kd-tree based
 approximation described in the original Cleveland, et al papers[1,2,3], implemented
