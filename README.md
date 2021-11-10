@@ -9,27 +9,25 @@ function.
 
 ## Synopsis
 
-`Loess` exports two functions: `loess` and `predict`, that train and apply the model, respectively.
+`Loess` exports two functions, `loess` and `predict`, that train and apply the model, respectively. The amount of smoothing is mainly controlled by the `span` keyword argument. E.g.:
 
 
 ```julia
-using Loess
+using Loess, Plots
 
 xs = 10 .* rand(100)
 ys = sin.(xs) .+ 0.5 * rand(100)
 
-model = loess(xs, ys)
+model = loess(xs, ys, span=0.5)
 
 us = range(extrema(xs)...; step = 0.1)
 vs = predict(model, us)
 
-using Gadfly
-p = plot(x=xs, y=ys, Geom.point, Guide.xlabel("x"), Guide.ylabel("y"),
-         layer(Geom.line, x=us, y=vs))
-draw(SVG("loess.svg", 6inch, 3inch), p)
+scatter(xs, ys)
+plot!(us, vs, legend=false)
 ```
 
-![Example Plot](http://JuliaStats.github.io/Loess.jl/loess.svg)
+![Example Plot](loess.svg)
 
 There's also a shortcut in Gadfly to draw these plots:
 
