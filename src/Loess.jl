@@ -102,7 +102,11 @@ function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
             vs[i] = ys[pᵢ] * w
         end
 
-        F = qr(us, Val(true))
+        if VERSION < v"1.7.0-DEV.1188"
+            F = qr(us, Val(true))
+        else
+            F = qr(us, ColumnNorm())
+        end
         bs[k,:] = F\vs
     end
 
