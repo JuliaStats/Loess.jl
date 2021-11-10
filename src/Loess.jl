@@ -23,12 +23,12 @@ end
 Fit a loess model.
 
 Args:
-  `xs`: A `n` by `m` matrix with `n` observations from `m` independent predictors
-  `ys`: A length `n` response vector.
-  `normalize`: Normalize the scale of each predicitor. (default true when `m > 1`)
-  `span`: The degree of smoothing, typically in [0,1]. Smaller values result in smaller
+  - `xs`: A `n` by `m` matrix with `n` observations from `m` independent predictors
+  - `ys`: A length `n` response vector.
+  - `normalize`: Normalize the scale of each predicitor. (default true when `m > 1`)
+  - `span`: The degree of smoothing, typically in [0,1]. Smaller values result in smaller
       local context in fitting.
-  `degree`: Polynomial degree.
+  - `degree`: Polynomial degree.
 
 Returns:
   A fit `LoessModel`.
@@ -189,7 +189,7 @@ end
 Tricubic weight function.
 
 Args:
-  `u`: Distance between 0 and 1
+  - `u`: Distance between 0 and 1
 
 Returns:
   A weighting of the distance `u`
@@ -231,8 +231,8 @@ Default normalization procedure for predictors.
 This simply normalizes by the mean of everything between the 10th an 90th percentiles.
 
 Args:
-  `xs`: a matrix of predictors
-  `q`: cut the ends of at quantiles `q` and `1-q`
+  - `xs`: a matrix of predictors
+  - `q`: cut the ends of at quantiles `q` and `1-q`
 
 Modifies:
   `xs`
