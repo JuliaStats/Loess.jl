@@ -7,12 +7,12 @@ struct KDInternalNode{T <: AbstractFloat}
     rightnode::Union{Nothing, KDInternalNode{T}}
 end
 
-struct KDTree{T <: AbstractFloat}
-    xs::AbstractMatrix{T} # A matrix of n, m-dimensional observations
-    perm::Vector{Int}     # permutation of data to avoid modifying xs
+struct KDTree{T <: AbstractFloat, M <: AbstractMatrix{T}}
+    xs::M                                   # A matrix of n, m-dimensional observations
+    perm::Vector{Int}                       # permutation of data to avoid modifying xs
     root::Union{Nothing, KDInternalNode{T}} # root node
     verts::Set{Vector{T}}
-    bounds::Matrix{T}     # Top-level bounding box
+    bounds::Matrix{T}                       # Top-level bounding box
 end
 
 
@@ -33,9 +33,9 @@ Returns:
   A `KDTree` object
 
 """
-function KDTree(xs::AbstractMatrix{T},
+function KDTree(xs::M,
                 leaf_size_factor=0.05,
-                leaf_diameter_factor=0.0) where T <: AbstractFloat
+                leaf_diameter_factor=0.0) where {T <: AbstractFloat, M <: AbstractMatrix{T}}
 
     n, m = size(xs)
     perm = collect(1:n)
@@ -106,12 +106,12 @@ Modifies:
 Returns:
   Either `nothing` (used as leaf node) or a `KDInternalNode`
 """
-function build_kdtree(xs::AbstractMatrix{T},
+function build_kdtree(xs::M,
                       perm::AbstractArray,
                       bounds::Matrix{T},
                       leaf_size_cutoff::Int,
                       leaf_diameter_cutoff::T,
-                      verts::Set{Vector{T}}) where T
+                      verts::Set{Vector{T}}) where {T <: AbstractFloat, M <: AbstractMatrix{T}}
     n, m = size(xs)
 
     if length(perm) <= leaf_size_cutoff || diameter(bounds) <= leaf_diameter_cutoff
@@ -192,7 +192,7 @@ end
 Traverse the tree `kdtree` to the bottom and return the verticies of
 the bounding hypercube of the leaf node containing the point `x`.
 """
-function traverse(kdtree::KDTree{T}, x::AbstractVector{T}) where T
+function traverse(kdtree::KDTree{T,M}, x::AbstractVector{T}) where {T <: AbstractFloat, M <: AbstractMatrix{T}}
     m = size(kdtree.bounds, 2)
 
     if length(x) != m

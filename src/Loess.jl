@@ -9,12 +9,12 @@ export loess, predict
 include("kd.jl")
 
 
-mutable struct LoessModel{T <: AbstractFloat}
-    xs::AbstractMatrix{T} # An n by m predictor matrix containing n observations from m predictors
-    ys::AbstractVector{T} # A length n response vector
+struct LoessModel{T <: AbstractFloat, V <: AbstractVector{T}, M <: AbstractMatrix{T}}
+    xs::M # An n by m predictor matrix containing n observations from m predictors
+    ys::V # A length n response vector
     bs::Matrix{T}         # Least squares coefficients
     verts::Dict{Vector{T}, Int} # kd-tree vertexes mapped to indexes
-    kdtree::KDTree{T}
+    kdtree::KDTree{T,M}
 end
 
 """
@@ -34,10 +34,10 @@ Returns:
   A fit `LoessModel`.
 
 """
-function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
+function loess(xs::M, ys::V;
                normalize::Bool=true,
                span::AbstractFloat=0.75,
-               degree::Integer=2) where T<:AbstractFloat
+               degree::Integer=2) where {T <: AbstractFloat, V <: AbstractVector{T}, M <: AbstractMatrix{T}}
     if size(xs, 1) != size(ys, 1)
         throw(DimensionMismatch("Predictor and response arrays must of the same length"))
     end
@@ -110,7 +110,7 @@ function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
         bs[k,:] = F\vs
     end
 
-    LoessModel{T}(xs, ys, bs, verts, kdtree)
+    LoessModel{T,V,M}(xs, ys, bs, verts, kdtree)
 end
 
 loess(xs::AbstractVector{T}, ys::AbstractVector{T}; kwargs...) where {T<:AbstractFloat} =
@@ -135,12 +135,12 @@ end
 # Returns:
 #   A length n' vector of predicted response values.
 #
-function predict(model::LoessModel{T}, z::T) where T <: AbstractFloat
+function predict(model::LoessModel{T,V,M}, z::T) where {T <: AbstractFloat, V <: AbstractVector{T}, M <: AbstractMatrix{T}}
     predict(model, T[z])
 end
 
 
-function predict(model::LoessModel{T}, zs::AbstractVector{T}) where T <: AbstractFloat
+function predict(model::LoessModel{T,V,M}, zs::AbstractVector{T}) where {T <: AbstractFloat, V <: AbstractVector{T}, M <: AbstractMatrix{T}}
     m = size(model.xs, 2)
 
     # in the univariate case, interpret a non-singleton zs as vector of
@@ -178,7 +178,7 @@ function predict(model::LoessModel{T}, zs::AbstractVector{T}) where T <: Abstrac
 end
 
 
-function predict(model::LoessModel{T}, zs::AbstractMatrix{T}) where T <: AbstractFloat
+function predict(model::LoessModel{T,V,M}, zs::AbstractMatrix{T}) where {T <: AbstractFloat, V <: AbstractVector{T}, M <: AbstractMatrix{T}}
     ys = Array{T}(undef, size(zs, 1))
     for i in 1:size(zs, 1)
         # the vec() here is not necessary on 0.5 anymore
