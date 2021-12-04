@@ -1,22 +1,16 @@
 # Simple static kd-trees.
 
-abstract type KDNode end
-
-struct KDLeafNode <: KDNode
-end
-
-struct KDInternalNode{T <: AbstractFloat} <: KDNode
+struct KDInternalNode{T <: AbstractFloat}
     j::Int             # dimension on which the data is split
     med::T             # median value where the split occours
-    leftnode::KDNode
-    rightnode::KDNode
+    leftnode::Union{Nothing, KDInternalNode{T}}
+    rightnode::Union{Nothing, KDInternalNode{T}}
 end
-
 
 struct KDTree{T <: AbstractFloat}
     xs::AbstractMatrix{T} # A matrix of n, m-dimensional observations
     perm::Vector{Int}     # permutation of data to avoid modifying xs
-    root::KDNode          # root node
+    root::Union{Nothing, KDInternalNode{T}} # root node
     verts::Set{Vector{T}}
     bounds::Matrix{T}     # Top-level bounding box
 end
@@ -110,7 +104,7 @@ Modifies:
   `perm`, `verts`
 
 Returns:
-  Either a `KDLeafNode` or a `KDInternalNode`
+  Either `nothing` (used as leaf node) or a `KDInternalNode`
 """
 function build_kdtree(xs::AbstractMatrix{T},
                       perm::AbstractArray,
@@ -121,7 +115,7 @@ function build_kdtree(xs::AbstractMatrix{T},
     n, m = size(xs)
 
     if length(perm) <= leaf_size_cutoff || diameter(bounds) <= leaf_diameter_cutoff
-        return KDLeafNode()
+        return nothing
     end
 
     # split on the dimension with the largest spread
@@ -218,7 +212,7 @@ function traverse(kdtree::KDTree{T}, x::AbstractVector{T}) where T
 
     bounds = copy(kdtree.bounds)
     node = kdtree.root
-    while !isa(node, KDLeafNode)
+    while isa(node, KDInternalNode)
         if x[node.j] <= node.med
             bounds[2, node.j] = node.med
             node = node.leftnode
