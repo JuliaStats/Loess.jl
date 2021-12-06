@@ -9,10 +9,10 @@ export loess, predict
 include("kd.jl")
 
 
-struct LoessModel{T <: AbstractFloat, V <: AbstractVector{T}, M <: AbstractMatrix{T}}
-    xs::M # An n by m predictor matrix containing n observations from m predictors
-    ys::V # A length n response vector
-    bs::Matrix{T}         # Least squares coefficients
+struct LoessModel{B, T <: AbstractFloat, V <: AbstractVector{T}, M <: AbstractMatrix{T}}
+    xs::M                       # An n by m predictor matrix containing n observations from m predictors
+    ys::V                       # A length n response vector
+    bs::Matrix{T}               # Least squares coefficients
     verts::Dict{Vector{T}, Int} # kd-tree vertexes mapped to indexes
     kdtree::KDTree{T,M}
 end
@@ -110,7 +110,7 @@ function loess(xs::M, ys::V;
         bs[k,:] = F\vs
     end
 
-    LoessModel{T,V,M}(xs, ys, bs, verts, kdtree)
+    LoessModel{(m>1),T,V,M}(xs, ys, bs, verts, kdtree)
 end
 
 loess(xs::AbstractVector{T}, ys::AbstractVector{T}; kwargs...) where {T<:AbstractFloat} =
@@ -135,56 +135,48 @@ end
 # Returns:
 #   A length n' vector of predicted response values.
 #
-function predict(model::LoessModel{T,V,M}, z::T) where {T <: AbstractFloat, V <: AbstractVector{T}, M <: AbstractMatrix{T}}
-    predict(model, T[z])
+
+# univariate model, prediction at single point
+function predict(model::LoessModel{false,T,V,M}, z::T) where {T <: AbstractFloat, V <: AbstractVector{T}, M <: AbstractMatrix{T}}
+    adjacent_verts = traverse(model.kdtree, T[z])
+    @assert(length(adjacent_verts) == 2)
+    v₁, v₂ = adjacent_verts[1][1], adjacent_verts[2][1]
+    interpolate(model,z,v₁,v₂)
 end
 
-
-function predict(model::LoessModel{T,V,M}, zs::AbstractVector{T}) where {T <: AbstractFloat, V <: AbstractVector{T}, M <: AbstractMatrix{T}}
-    m = size(model.xs, 2)
-
-    # in the univariate case, interpret a non-singleton zs as vector of
-    # ponits, not one point
-    if m == 1 && length(zs) > 1
-        return predict(model, reshape(zs, (length(zs), 1)))
-    end
-
-    if length(zs) != m
-        error("$(m)-dimensional model applied to length $(length(zs)) vector")
-    end
-
-    adjacent_verts = traverse(model.kdtree, zs)
-
-    if m == 1
-        @assert(length(adjacent_verts) == 2)
-        z = zs[1]
-        v₁, v₂ = adjacent_verts[1][1], adjacent_verts[2][1]
-
-        if z == v₁ || z == v₂
-            return evalpoly(zs, model.bs[model.verts[[z]],:])
-        end
-
-        u = (z - v₁)/(v₂ - v₁)
-
-        y1 = evalpoly(zs, model.bs[model.verts[[v₁]],:])
-        y2 = evalpoly(zs, model.bs[model.verts[[v₂]],:])
-        return (1.0 - u) * y1 + u * y2
-    else
-        error("Multivariate blending not yet implemented")
-        # TODO:
-        #   1. Univariate linear interpolation between adjacent verticies.
-        #   2. Blend these estimates. (I'm not sure how this is done.)
-    end
+# univariate model, prediction at multiple points
+function predict(model::LoessModel{false,T,V,M}, zs::AbstractVector{T}) where {T <: AbstractFloat, V <: AbstractVector{T}, M <: AbstractMatrix{T}}
+    map(z->predict(model, z),zs)
 end
 
-
-function predict(model::LoessModel{T,V,M}, zs::AbstractMatrix{T}) where {T <: AbstractFloat, V <: AbstractVector{T}, M <: AbstractMatrix{T}}
-    ys = Array{T}(undef, size(zs, 1))
-    for i in 1:size(zs, 1)
-        # the vec() here is not necessary on 0.5 anymore
-        ys[i] = predict(model, vec(zs[i,:]))
+# multivariate model, prediction at single point
+function predict(model::LoessModel{true,T,V,M}, z::AbstractVector{T}) where {T <: AbstractFloat, V <: AbstractVector{T}, M <: AbstractMatrix{T}}
+    if length(z) != size(model.xs, 2)
+        throw(DimensionMismatch("$(size(model.xs, 2))-dimensional model applied to length $(length(z)) vector"))
     end
-    ys
+    error("Multivariate blending not yet implemented")
+    # TODO:
+    #   1. Univariate linear interpolation between adjacent verticies.
+    #   2. Blend these estimates. (I'm not sure how this is done.)
+end
+
+# multivariate model, prediction at multiple points
+function predict(model::LoessModel{true,T,V,M}, zs::AbstractMatrix{T}) where {T <: AbstractFloat, V <: AbstractVector{T}, M <: AbstractMatrix{T}}
+    map(z->predict(model, z), eachrow(zs))
+end
+
+"""Univariate interpolation"""
+function interpolate(model, z::T,v₁::T, v₂::T) where {T <: AbstractFloat}
+    zs=T[z]
+    if z == v₁ || z == v₂
+        return evalpoly(zs, model.bs[model.verts[[z]],:])
+    end
+
+    u = (z - v₁)/(v₂ - v₁)
+
+    y1 = evalpoly(zs, model.bs[model.verts[[v₁]],:])
+    y2 = evalpoly(zs, model.bs[model.verts[[v₂]],:])
+    return (one(u) - u) * y1 + u * y2
 end
 
 """

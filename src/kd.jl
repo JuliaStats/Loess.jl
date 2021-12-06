@@ -17,7 +17,7 @@ end
 
 
 """
-    KDTree(xs, leaf_size_factor, leaf_diameter factor)
+    KDTree(xs, leaf_size_factor, leaf_diameter_factor)
 
 Construct a kd-tree
 
