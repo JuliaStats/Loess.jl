@@ -64,7 +64,7 @@ function KDTree(xs::AbstractMatrix{T},
         push!(verts, T[vert...])
     end
 
-    root = build_kdtree(xs, perm, bounds, leaf_size_cutoff, leaf_diameter_cutoff, verts)
+    root = build_kdtree(xs, perm, bounds, leaf_size_cutoff, convert(T,leaf_diameter_cutoff), verts)
 
     KDTree(xs, collect(1:n), root, verts, bounds)
 end
