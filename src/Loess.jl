@@ -7,7 +7,9 @@ using Statistics, LinearAlgebra
 export loess, predict
 
 include("kd.jl")
+include("Lowess.jl")
 
+export lowess
 
 mutable struct LoessModel{T <: AbstractFloat}
     xs::AbstractMatrix{T} # An n by m predictor matrix containing n observations from m predictors
