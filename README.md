@@ -2,14 +2,42 @@
 
 [![CI](https://github.com/JuliaStats/Loess.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/JuliaStats/Loess.jl/actions/workflows/ci.yml)
 
-This is a pure Julia loess implementation, based on the fast kd-tree based
+This is a pure Julia implementation of the `lowess` and `loess` smoothers.
+
+The Julia code for `lowess` has been hand-translated from the `lowess.c` code at https://github.com/carlohamalainen/cl-lowess/blob/master/lowess.c.
+
+`loess` is based on the fast kd-tree based
 approximation described in the original Cleveland, et al papers[1,2,3], implemented
 in the netlib loess C/Fortran code, and used by many, including in R's loess
 function.
 
 ## Synopsis
 
-`Loess` exports two functions, `loess` and `predict`, that train and apply the model, respectively. The amount of smoothing is mainly controlled by the `span` keyword argument. E.g.:
+`Loess` exports three functions: `lowess`, `loess` and `predict`.
+
+The `lowess` function returns the predicted y-values for the input x-values. The amount of smoothing for this function controlled by the `f` keyword argument. An example plot for this is given below.
+
+```julia
+using Loess, Plots, Random
+Random.seed(43)
+
+n = 200
+xs = 1:n
+xs = (i -> i*2*pi/n).(xs)
+ys = sin.(xs) .+ rand(0:999, 200) / 1000.0
+f = 0.25
+nsteps = 3
+delta = 0.3
+
+zs = lowess(xs, ys, f, nsteps, delta)
+
+scatter(xs, ys)
+plot!(xs, zs)
+```
+
+![Example Plot](lowess.svg)
+
+`loess` and `predict` are functions that train and apply the loess model, respectively. The amount of smoothing is mainly controlled by the `span` keyword argument. E.g.:
 
 
 ```julia
@@ -34,7 +62,6 @@ There's also a shortcut in Gadfly to draw these plots:
 ```julia
 plot(x=xs, y=ys, Geom.point, Geom.smooth, Guide.xlabel("x"), Guide.ylabel("y"))
 ```
-
 
 ## Status
 
