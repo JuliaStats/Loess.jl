@@ -2,14 +2,10 @@
 
 [![CI](https://github.com/JuliaStats/Loess.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/JuliaStats/Loess.jl/actions/workflows/ci.yml)
 
-This is a pure Julia implementation of the `lowess` and `loess` smoothers.
+This is a pure Julia implementation of the `loess` and `lowess` smoothers.
 
 `loess` is based on the fast kd-tree based
-approximation described in the original Cleveland, et al papers[1,2,3], implemented
-in the netlib loess C/Fortran code, and used by many, including in R's loess
-function.
-
-The Julia code for `lowess` has been hand-translated from the `lowess.c` code at https://github.com/carlohamalainen/cl-lowess/blob/master/lowess.c
+approximation described in the original Cleveland, et al papers[1,2,3], implemented in the netlib loess C/Fortran code, and used by many, including in R's loess function. The Julia code for `lowess` has been hand-translated from [C](https://github.com/carlohamalainen/cl-lowess/blob/master/lowess.c), based on Cleveland 1979. 
 
 ## Synopsis
 
