@@ -1,34 +1,3 @@
-@testset "Lowess Basic Tests" begin
-    @testset "Testing with floating point numbers" begin
-        for i = 1:500
-            n = rand(6:100)
-            xs = unique(sort(rand(1:100000000, 5*n)))[1:n] ./ 100000000
-            ys = rand(1:100000000, 5*n)[1:n] ./ 100000000
-            f = rand(1:100000000) / 100000000
-            nsteps = Int(rand(1:10))
-            delta = rand(0:100000000) / 100000000
-
-            zs = lowess(xs, ys, f, nsteps, delta)
-            @test length(zs) == length(ys)
-        end
-    end
-
-    @testset "Testing with integers" begin
-        for i = 1:500
-            n = rand(6:100)
-            xs = rand(1:100, n)
-            xs = sort(xs)
-            ys = rand(1:100, n)
-            f = rand(1:100000000) / 100000000
-            nsteps = Int(rand(1:10))
-            delta = rand(0:100000000) / 100000000
-
-            zs = lowess(xs, ys, f, nsteps, delta)
-            @test length(zs) == length(ys)
-        end
-    end
-end
-
 @testset "Lowess Bounds Test" begin
     xs = 10 .* rand(100)
     ys = sin.(xs) .+ 0.5 * rand(100)
@@ -37,7 +6,7 @@ end
     @test maximum(zs) <= 1.1
 end
 
-@testset "Comparing against results of the original C code using random inputs." begin
+@testset "C tests with floats." begin
     @testset "test 1" begin
         xs  = [0.03, 0.16, 0.37, 0.58, 0.71, 0.85, 0.92, 0.99]
         ys  = [0.21, 0.62, 0.05, 0.92, 0.81, 0.5, 0.65, 0.23]
@@ -87,5 +56,56 @@ end
         zs = [0.4003188954738399, 0.4282100726879575, 0.44322839888017473, 0.4404274424163527, 0.7243844287810028, 0.8131209870199563]
         @test lowess(xs, ys, f, nsteps, delta) == zs
     end
+end
 
-end 
+@testset "C tests with ints." begin
+    @testset "test 1" begin
+        xs  = [3, 16, 37, 58, 71, 85, 92, 99]
+        ys  = [34, 17, 19, 46, 37, 12, 19, 76]
+        f   = 0.888
+        nsteps  = 5
+        delta   = 0.722
+        zs = [24.16160454268896, 25.68812005828106, 28.65470533137912, 32.41594186202208, 33.21325359358515, 36.66797225555004, 38.219534918062166, 39.83448459003582]
+        @test lowess(xs, ys, f, nsteps, delta) == zs
+    end
+
+    @testset "test 2" begin
+        xs  = [5, 6, 39, 51, 54, 77, 94]
+        ys  = [56, 96, 7, 43, 50, 6, 18]
+        f = 0.457
+        nsteps = 1
+        delta = 0.211
+        zs = [55.99999999999997, 95.99999999999997, 6.999999999999997, 43.000000000000085, 50.000000000000135, 5.999999999999999, 18.00000000000001]
+        @test lowess(xs, ys, f, nsteps, delta) == zs
+    end
+
+    @testset "test 3" begin
+        xs  = [8, 14, 34, 53, 56, 60, 69, 74]
+        ys  = [55, 25, 61, 5, 60, 94, 75, 69]
+        f   = 0.741
+        nsteps  = 1
+        delta   = 0.845
+        zs = [41.2806572273703, 44.10805712622063, 49.479808643597146, 20.261120010393306, 46.05149712706894, 66.5659090517141, 75.37151361313856, 69.17534870215226]
+        @test lowess(xs, ys, f, nsteps, delta) == zs
+    end
+
+    @testset "test 4" begin
+        xs  = [12, 17, 19, 30, 33, 57, 60, 87]
+        ys  = [1, 95, 21, 16, 94, 57, 82, 18]
+        f   = 0.565
+        nsteps  = 4
+        delta   = 0.379
+        zs = [10.685926120690844, 39.53280233940788, 48.05950850869127, 42.4207247256067, 77.96343040038715, 68.67685655483697, 82.00000000000007, 18.97936991085022]
+        @test lowess(xs, ys, f, nsteps, delta) == zs
+    end
+
+    @testset "test 5" begin
+        xs  = [36, 45, 46, 48, 57, 58, 93, 99]
+        ys  = [40, 85, 30, 31, 52, 40, 79, 30]
+        f   = 0.937
+        nsteps  = 5
+        delta   = 1.0
+        zs = [44.354647553697596, 44.695277023911935, 44.73964212703127, 44.82591036430719, 44.68923172948601, 44.545298404683564, 52.24471897990482, 51.77469610389949]
+        @test lowess(xs, ys, f, nsteps, delta) == zs
+    end
+end
