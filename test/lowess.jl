@@ -1,13 +1,14 @@
-using Distributions
-
 @testset "Lowess Basic Tests" begin
     @testset "Testing with floating point numbers" begin
         for i = 1:500
             n = rand(6:100)
-            xs = rand(Uniform(1.0, 100.0), n)
-            xs = sort(xs)
-            ys = rand(Uniform(1.0, 100.0), n)
-            zs = lowess(xs, ys, rand(Uniform(0.1, 1.0)), rand(3:10), rand(Uniform(0.0, 1.0)))
+            xs = unique(sort(rand(1:100000000, 5*n)))[1:n] ./ 100000000
+            ys = rand(1:100000000, 5*n)[1:n] ./ 100000000
+            f = rand(1:100000000) / 100000000
+            nsteps = Int(rand(1:10))
+            delta = rand(0:100000000) / 100000000
+
+            zs = lowess(xs, ys, f, nsteps, delta)
             @test length(zs) == length(ys)
         end
     end
