@@ -19,7 +19,11 @@
             xs = rand(1:100, n)
             xs = sort(xs)
             ys = rand(1:100, n)
-            zs = lowess(xs, ys, rand(Uniform(0.1, 1.0)), rand(3:10), rand(Uniform(0.0, 1.0)))
+            f = rand(1:100000000) / 100000000
+            nsteps = Int(rand(1:10))
+            delta = rand(0:100000000) / 100000000
+
+            zs = lowess(xs, ys, f, nsteps, delta)
             @test length(zs) == length(ys)
         end
     end
