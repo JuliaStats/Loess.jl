@@ -6,7 +6,7 @@
     @test maximum(zs) <= 1.1
 end
 
-@testset "Comparing against results of the original C code using random floating point inputs." begin
+@testset "Comparing against the results of the original C code using random floating point inputs." begin
     @testset "test 1" begin
         xs  = [0.03, 0.16, 0.37, 0.58, 0.71, 0.85, 0.92, 0.99]
         ys  = [0.21, 0.62, 0.05, 0.92, 0.81, 0.5, 0.65, 0.23]
@@ -58,7 +58,7 @@ end
     end
 end
 
-@testset "Comparing against results of the original C code using random integer point inputs." begin
+@testset "Comparing against the results of the original C code using random integer inputs." begin
     @testset "test 1" begin
         xs  = [3, 16, 37, 58, 71, 85, 92, 99]
         ys  = [34, 17, 19, 46, 37, 12, 19, 76]
