@@ -65,14 +65,22 @@ end
 
     # Test values from R's loess expect outer vertices as they are made wider in the R/C/Fortran implementation
     @testset "vertices" begin
-        @test sort(getindex.(keys(ft.verts))) == [4.0, 8.0, 10.0, 12.0, 13.0, 14.0, 15.0, 17.0, 19.0, 22.0, 25.0]
+        @test sort(getindex.(keys(ft.predictions_and_gradients))) == [4.0, 8.0, 10.0, 12.0, 13.0, 14.0, 15.0, 17.0, 19.0, 22.0, 25.0]
     end
 
     @testset "predict" begin
         # In R this is `predict(cars.lo, data.frame(speed = seq(5, 25, 1)))`.
         Rvals = [7.797353, 10.002308, 12.499786, 15.281082, 18.446568, 21.865315, 25.517015, 29.350386, 33.230660, 37.167935, 41.205226, 45.055736, 48.355889, 49.824812, 51.986702, 56.461318, 61.959729, 68.569313, 76.316068, 85.212121, 95.324047]
-        @test predict(ft, [10, 15, 22]) ≈ Rvals[[6, 11, 18]] rtol=1e-5
-        # The interpolated values are broken until https://github.com/JuliaStats/Loess.jl/pull/63 is merged
-        @test_broken predict(ft) ≈ Rvals rtol=1e-5
+
+        for (x, Ry) in zip(5:25, Rvals)
+            if 8 <= x <= 22
+                @test predict(ft, x) ≈ Ry rtol = 1e-7
+            else
+                # The outer vertices are expanded by 0.105 in the original implementation. Not sure if we
+                # want to do the same thing so meanwhile the results will deviate slightly between the
+                # outermost vertices
+                @test predict(ft, x) ≈ Ry rtol = 1e-3
+            end
+        end
     end
 end

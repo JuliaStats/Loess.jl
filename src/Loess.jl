@@ -13,8 +13,7 @@ include("kd.jl")
 mutable struct LoessModel{T <: AbstractFloat}
     xs::AbstractMatrix{T} # An n by m predictor matrix containing n observations from m predictors
     ys::AbstractVector{T} # A length n response vector
-    bs::Matrix{T}         # Least squares coefficients
-    verts::Dict{Vector{T}, Int} # kd-tree vertexes mapped to indexes
+    predictions_and_gradients::Dict{Vector{T}, Vector{T}} # kd-tree vertexes mapped to prediction and gradient at each vertex
     kdtree::KDTree{T}
 end
 
@@ -59,27 +58,25 @@ function loess(
     # correctly apply predict to unnormalized data. We should have a normalize
     # function that just returns a vector of scaling factors.
     if normalize && m > 1
+        throw(ArgumentError("higher dimensional models not yet supported"))
         xs = tnormalize!(copy(xs))
     end
 
     kdtree = KDTree(xs, cell * span, 0)
 
-    # map verticies to their index in the bs coefficient matrix
-    verts = Dict{Vector{T}, Int}()
-    for (k, vert) in enumerate(kdtree.verts)
-        verts[vert] = k
-    end
+    # map verticies to their prediction and prediction gradient
+    predictions_and_gradients = Dict{Vector{T}, Vector{T}}()
 
     # Fit each vertex
     ds = Array{T}(undef, n) # distances
     perm = collect(1:n)
-    bs = Array{T}(undef, length(kdtree.verts), 1 + degree * m)
 
-    # TODO: higher degree fitting
+    # Initialize the regression arrays
     us = Array{T}(undef, q, 1 + degree * m)
+    du1dt = zeros(T, m, 1 + degree * m)
     vs = Array{T}(undef, q)
 
-    for (vert, k) in verts
+    for vert in kdtree.verts
         # reset perm
         for i in 1:n
             perm[i] = i
@@ -109,15 +106,31 @@ function loess(
             vs[i] = ys[pᵢ] * w
         end
 
+        # Compute the gradient of the vertex
+        pᵢ = perm[1]
+        for j in 1:m
+            x = xs[pᵢ, j]
+            xl = one(x)
+            for l in 1:degree
+                du1dt[j, 1 + (j - 1)*degree + l] = l * xl
+                xl *= x
+            end
+        end
+
         if VERSION < v"1.7.0-DEV.1188"
             F = qr(us, Val(true))
         else
             F = qr(us, ColumnNorm())
         end
-        bs[k,:] = F\vs
+        coefs = F\vs
+
+        predictions_and_gradients[vert] = [
+            us[1, :]' * coefs; # the prediction
+            du1dt * coefs      # the gradient of the prediction
+        ]
     end
 
-    LoessModel{T}(xs, ys, bs, verts, kdtree)
+    LoessModel{T}(xs, ys, predictions_and_gradients, kdtree)
 end
 
 loess(xs::AbstractVector{T}, ys::AbstractVector{T}; kwargs...) where {T<:AbstractFloat} =
@@ -170,22 +183,19 @@ function predict(model::LoessModel, zs::AbstractVector)
         v₁, v₂ = adjacent_verts[1][1], adjacent_verts[2][1]
 
         if z == v₁ || z == v₂
-            return evalpoly(zs, model.bs[model.verts[[z]],:])
+            return first(model.predictions_and_gradients[[z]])
         end
 
-        u = (z - v₁)/(v₂ - v₁)
+        y₁, dy₁ = model.predictions_and_gradients[[v₁]]
+        y₂, dy₂ = model.predictions_and_gradients[[v₂]]
 
-        y1 = evalpoly(zs, model.bs[model.verts[[v₁]],:])
-        y2 = evalpoly(zs, model.bs[model.verts[[v₂]],:])
-        return (1.0 - u) * y1 + u * y2
+        b_int = cubic_interpolation(v₁, y₁, dy₁, v₂, y₂, dy₂)
+
+        return evalpoly(z, b_int)
     else
         error("Multivariate blending not yet implemented")
-        # TODO:
-        #   1. Univariate linear interpolation between adjacent verticies.
-        #   2. Blend these estimates. (I'm not sure how this is done.)
     end
 end
-
 
 predict(model::LoessModel, zs::AbstractMatrix) = map(Base.Fix1(predict, model), eachrow(zs))
 
@@ -203,30 +213,33 @@ Returns:
 """
 tricubic(u) = (1 - u^3)^3
 
-
 """
-    evalpoly(xs,bs)
+    cubic_interpolation(x₁, y₁, dy₁, x₂, y₂, dy₂)
 
-Evaluate a multivariate polynomial with coefficients `bs` at `xs`.  `bs` should be of length
-`1+length(xs)*d` where `d` is the degree of the polynomial.
-
-    bs[1] + xs[1]*bs[2] + xs[1]^2*bs[3] + ... + xs[end]^d*bs[end]
-
+Compute the coefficients of the cubic polynomial ``f`` for which
+```math
+\begin{aligned}
+    y₁  &= f(x₁)  \\
+    dy₁ &= f'(x₁) \\
+    y₂  &= f(x₂)  \\
+    dy₂ &= f'(x₂) \\
+\end{aligned}
+```
 """
-function evalpoly(xs, bs)
-    m = length(xs)
-    degree = div(length(bs) - 1, m)
-    y = bs[1]
-    for i in 1:m
-        x = xs[i]
-        xx = x
-        y += xx * bs[1 + (i-1)*degree + 1]
-        for l in 2:degree
-            xx *= x
-            y += xx * bs[1 + (i-1)*degree + l]
-        end
-    end
-    y
+function cubic_interpolation(x₁, y₁, dy₁, x₂, y₂, dy₂)
+    Δx = x₁ - x₂
+    Δx³ = Δx^3
+    Δy = y₁ - y₂
+    num0 = -x₂ * (x₁ * Δx * (dy₂ * x₁ + dy₁ * x₂) + x₂ * (x₂ - 3 * x₁) * y₁) + x₁^2 * (x₁ - 3 * x₂) * y₂
+    num1 = dy₂ * x₁ * Δx * (x₁ + 2 * x₂) - x₂ * (dy₁ * (x₁ * x₂ + x₂^2 - 2 * x₁^2) + 6 * x₁ * Δy)
+    num2 = -(dy₁ * Δx * (x₁ + 2 * x₂)) + dy₂ * (x₁ * x₂ + x₂^2 - 2 * x₁^2) + 3 * (x₁ + x₂) * Δy
+    num3 = (dy₁ + dy₂) * Δx - 2 * Δy
+    return (
+        num0 / Δx³,
+        num1 / Δx³,
+        num2 / Δx³,
+        num3 / Δx³
+    )
 end
 
 """
