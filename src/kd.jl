@@ -246,14 +246,15 @@ end
 Traverse the tree `kdtree` to the bottom and return the verticies of
 the bounding hypercube of the leaf node containing the point `x`.
 """
-function traverse(kdtree::KDTree, x::AbstractVector)
+function traverse(kdtree::KDTree{T}, x::NTuple{N,T}) where {N,T}
+
     m = size(kdtree.bounds, 2)
 
-    if length(x) != m
+    if N != m
         throw(DimensionMismatch("$(m)-dimensional kd-tree searched with a length $(length(x)) vector."))
     end
 
-    for j in 1:m
+    for j in 1:N
         if x[j] < kdtree.bounds[1, j] || x[j] > kdtree.bounds[2, j]
             error(
                   """

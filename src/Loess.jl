@@ -153,49 +153,39 @@ end
 # Returns:
 #   A length n' vector of predicted response values.
 #
-function predict(model::LoessModel, z::Real)
-    predict(model, [z])
+function predict(model::LoessModel{T}, z::Number) where T
+    adjacent_verts = traverse(model.kdtree, (T(z),))
+
+    @assert(length(adjacent_verts) == 2)
+    v₁, v₂ = adjacent_verts[1][1], adjacent_verts[2][1]
+
+    if z == v₁ || z == v₂
+        return first(model.predictions_and_gradients[[z]])
+    end
+
+    y₁, dy₁ = model.predictions_and_gradients[[v₁]]
+    y₂, dy₂ = model.predictions_and_gradients[[v₂]]
+
+    b_int = cubic_interpolation(v₁, y₁, dy₁, v₂, y₂, dy₂)
+
+    return evalpoly(z, b_int)
 end
 
 function predict(model::LoessModel, zs::AbstractVector)
-
-    Base.require_one_based_indexing(zs)
-
-    m = size(model.xs, 2)
-
-    # in the univariate case, interpret a non-singleton zs as vector of
-    # ponits, not one point
-    if m == 1 && length(zs) > 1
-        return predict(model, reshape(zs, (length(zs), 1)))
+    if size(model.xs, 2) > 1
+        throw(ArgumentError("Multivariate blending not yet implemented"))
     end
 
-    if length(zs) != m
-        error("$(m)-dimensional model applied to length $(length(zs)) vector")
-    end
-
-    adjacent_verts = traverse(model.kdtree, zs)
-
-    if m == 1
-        @assert(length(adjacent_verts) == 2)
-        z = zs[1]
-        v₁, v₂ = adjacent_verts[1][1], adjacent_verts[2][1]
-
-        if z == v₁ || z == v₂
-            return first(model.predictions_and_gradients[[z]])
-        end
-
-        y₁, dy₁ = model.predictions_and_gradients[[v₁]]
-        y₂, dy₂ = model.predictions_and_gradients[[v₂]]
-
-        b_int = cubic_interpolation(v₁, y₁, dy₁, v₂, y₂, dy₂)
-
-        return evalpoly(z, b_int)
-    else
-        error("Multivariate blending not yet implemented")
-    end
+    predict.(Ref(model), zs)
 end
 
-predict(model::LoessModel, zs::AbstractMatrix) = map(Base.Fix1(predict, model), eachrow(zs))
+function predict(model::LoessModel, zs::AbstractMatrix)
+    if size(model.xs, 2) > 1
+        throw(ArgumentError("Multivariate blending not yet implemented"))
+    end
+
+    return [predict(model, z) for z in vec(zs)]
+end
 
 """
     tricubic(u)
