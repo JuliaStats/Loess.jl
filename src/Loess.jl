@@ -1,6 +1,7 @@
 module Loess
 
-import Distances.euclidean
+import Distances: euclidean
+import StatsAPI: predict
 
 using Statistics, LinearAlgebra
 
