@@ -44,18 +44,18 @@ end
     @testset "Example 1" begin
         x = [1.0, 2.0, 3.0, 4.0]
         y = [1.0, 2.0, 3.0, 4.0]
-        @test_throws ArgumentError("neighborhood size must be larger than degree+1=3 but was 1. Try increasing the value of span.") loess(x, y, span = 0.25)
-        @test_throws ArgumentError("neighborhood size must be larger than degree+1=3 but was 1. Try increasing the value of span.") loess(x, y, span = 0.33)
-        @test predict(loess(x, y), x) ≈ x
+        @test predict(loess(x, y, span = 0.25), x) ≈ y
+        @test predict(loess(x, y, span = 0.33), x) ≈ y
+        @test predict(loess(x, y), x) ≈ y
     end
 
     @testset "Example 2" begin
         x = [1.0, 1.0, 2.0, 3.0, 4.0, 4.0]
         y = [1.0, 1.0, 2.0, 3.0, 4.0, 4.0]
-        @test_throws ArgumentError("neighborhood size must be larger than degree+1=3 but was 1. Try increasing the value of span.") loess(x, y, span = 0.33)
-        @test_throws ArgumentError("neighborhood size must be larger than degree+1=3 but was 2. Try increasing the value of span.") predict(loess(x, y, span = 0.4), x) ≈ x
-        @test predict(loess(x, y, span = 0.5), x) ≈ x
-        @test predict(loess(x, y, span = 0.6), x) ≈ x
+        @test predict(loess(x, y, span = 0.33), x) ≈ y
+        @test predict(loess(x, y, span = 0.4), x) ≈ y
+        @test predict(loess(x, y, span = 0.5), x) ≈ y
+        @test predict(loess(x, y, span = 0.6), x) ≈ y
     end
 end
 
