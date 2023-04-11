@@ -39,9 +39,10 @@ Returns:
   A `KDTree` object
 
 """
-function KDTree(xs::AbstractMatrix{T},
-    leaf_size_factor,
-    leaf_diameter_factor
+function KDTree(
+    xs::AbstractMatrix{T},
+    leaf_size_factor::Real,
+    leaf_diameter_factor::Real
 ) where T <: AbstractFloat
 
     n, m = size(xs)
@@ -56,8 +57,7 @@ function KDTree(xs::AbstractMatrix{T},
 
     diam = diameter(bounds)
 
-    # leaf_size_cutoff = ceil(Int, leaf_size_factor * n)
-    leaf_size_cutoff = leaf_size_factor * n
+    leaf_size_cutoff = floor(Int, leaf_size_factor * n)
     leaf_diameter_cutoff = leaf_diameter_factor * diam
     verts = Set{Vector{T}}()
 
@@ -122,6 +122,10 @@ function build_kdtree(xs::AbstractMatrix{T},
                       leaf_size_cutoff::Real,
                       leaf_diameter_cutoff::Real,
                       verts::Set{Vector{T}}) where T
+
+    Base.require_one_based_indexing(xs)
+    Base.require_one_based_indexing(perm)
+
     n, m = size(xs)
 
     if length(perm) <= leaf_size_cutoff || diameter(bounds) <= leaf_diameter_cutoff
@@ -148,7 +152,7 @@ function build_kdtree(xs::AbstractMatrix{T},
 
     # Find the "median" and partition
     #
-    # The aim of the alogorihtm is to split the data recursively in two roughly equally sized
+    # The aim of the algorithm is to split the data recursively in two roughly equally sized
     # subsets. To do so, we'll use the median element of x[:, j] but there are a
     # few corner cases that require some care: sets with an even number of elements
     # doesn't have a unique median and ties. Below, we'll list the possibilities.
@@ -157,12 +161,12 @@ function build_kdtree(xs::AbstractMatrix{T},
     #   unambiguously 2 and split the data into [1, 2] and [3]
     #
     # - Even number of element and no ties, e.g. [1, 2, 3, 4]: we choose the left middle
-    #   value 2 as median and split the dato into [1, 2] and [3, 4]
+    #   value 2 as median and split the data into [1, 2] and [3, 4]
     #
     # - Ties will cause a search to the change in value that divides the set most evenly.
     #   E.g. [1, 2, 2, 3] uses 2 as median value to split the data into [1, 2, 2] and [3]
     #   but [1, 1, 2, 2, 2] uses 1 to split into [1, 1] and [2, 2, 2] even though 1 is
-    #   not a proper median value. This avoids that the same value in two buckets.
+    #   not a proper median value. This avoids that the same value is in two buckets.
     #
     # The details here are reversed engineered from the C/Fortran implementation wrapped
     # by R and also distribtued on NETLIB.
@@ -182,12 +186,14 @@ function build_kdtree(xs::AbstractMatrix{T},
         end
         if mid2 > length(perm)
             @debug "mid2 is out of bounds. Continuing with negative offset" mid2 length(perm) offset
+            # This makes the offset 0, 1, -1, 2, -2, ...
             offset = -offset + (offset <= 0)
             continue
         end
         p12 = partialsort!(perm, mid1:mid2, by = i -> xs[i, j])
         if xs[p12[1], j] == xs[p12[2], j]
             @debug "tie! Adjusting offset" xs[p12[1], j] xs[p12[2], j] offset
+            # This makes the offset 0, 1, -1, 2, -2, ...
             offset = -offset + (offset <= 0)
         else
             break

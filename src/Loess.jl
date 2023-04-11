@@ -49,7 +49,7 @@ function loess(
     end
 
     n, m = size(xs)
-    q = trunc(Int, (span * n))
+    q = floor(Int, span * n)
     if q < degree + 1
         throw(ArgumentError("neighborhood size must be larger than degree+1=$(degree + 1) but was $q. Try increasing the value of span."))
     end
@@ -61,7 +61,7 @@ function loess(
         xs = tnormalize!(copy(xs))
     end
 
-    kdtree = KDTree(xs, cell * span, 0.0)
+    kdtree = KDTree(xs, cell * span, 0)
 
     # map verticies to their index in the bs coefficient matrix
     verts = Dict{Vector{T}, Int}()
@@ -89,8 +89,8 @@ function loess(
             ds[i] = euclidean(vec(vert), vec(xs[i,:]))
         end
 
-        # copy the q nearest points to vert into X
-        partialsort!(perm, q, by=i -> ds[i])
+        # find the q closest points
+        partialsort!(perm, 1:q, by=i -> ds[i])
         dmax = maximum([ds[perm[i]] for i = 1:q])
 
         for i in 1:q
@@ -141,11 +141,14 @@ end
 # Returns:
 #   A length n' vector of predicted response values.
 #
-function predict(model::LoessModel, z::Number)
+function predict(model::LoessModel, z::Real)
     predict(model, [z])
 end
 
 function predict(model::LoessModel, zs::AbstractVector)
+
+    Base.require_one_based_indexing(zs)
+
     m = size(model.xs, 2)
 
     # in the univariate case, interpret a non-singleton zs as vector of
@@ -183,7 +186,7 @@ function predict(model::LoessModel, zs::AbstractVector)
 end
 
 
-predict(model::LoessModel, zs::AbstractMatrix) = [predict(model, zs[i,:]) for i in 1:size(zs, 1)]
+predict(model::LoessModel, zs::AbstractMatrix) = map(Base.Fix1(predict, model), eachrow(zs))
 
 """
     tricubic(u)
