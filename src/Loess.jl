@@ -30,21 +30,27 @@ Args:
   - `span`: The degree of smoothing, typically in [0,1]. Smaller values result in smaller
       local context in fitting.
   - `degree`: Polynomial degree.
+  - `cell`: Control parameter for bucket size. Internal interpolation nodes will be
+    added to the K-D tree until the number of bucket element is below `n * cell * span`.
 
 Returns:
   A fit `LoessModel`.
 
 """
-function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
-               normalize::Bool=true,
-               span::AbstractFloat=0.75,
-               degree::Integer=2) where T<:AbstractFloat
+function loess(
+    xs::AbstractMatrix{T},
+    ys::AbstractVector{T};
+    normalize::Bool = true,
+    span::AbstractFloat = 0.75,
+    degree::Integer = 2,
+    cell::AbstractFloat = 0.2
+) where T<:AbstractFloat
     if size(xs, 1) != size(ys, 1)
         throw(DimensionMismatch("Predictor and response arrays must of the same length"))
     end
 
     n, m = size(xs)
-    q = ceil(Int, (span * n))
+    q = floor(Int, span * n)
     if q < degree + 1
         throw(ArgumentError("neighborhood size must be larger than degree+1=$(degree + 1) but was $q. Try increasing the value of span."))
     end
@@ -56,7 +62,7 @@ function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
         xs = tnormalize!(copy(xs))
     end
 
-    kdtree = KDTree(xs, 0.05 * span)
+    kdtree = KDTree(xs, cell * span, 0)
 
     # map verticies to their index in the bs coefficient matrix
     verts = Dict{Vector{T}, Int}()
@@ -84,14 +90,14 @@ function loess(xs::AbstractMatrix{T}, ys::AbstractVector{T};
             ds[i] = euclidean(vec(vert), vec(xs[i,:]))
         end
 
-        # copy the q nearest points to vert into X
-        partialsort!(perm, q, by=i -> ds[i])
+        # find the q closest points
+        partialsort!(perm, 1:q, by=i -> ds[i])
         dmax = maximum([ds[perm[i]] for i = 1:q])
 
         for i in 1:q
             pᵢ = perm[i]
-            w = tricubic(ds[pᵢ] / dmax)
-            us[i,1] = w
+            w = sqrt(tricubic(ds[pᵢ] / dmax))
+            us[i, 1] = w
             for j in 1:m
                 x = xs[pᵢ, j]
                 wxl = w
@@ -136,12 +142,14 @@ end
 # Returns:
 #   A length n' vector of predicted response values.
 #
-function predict(model::LoessModel{T}, z::T) where T <: AbstractFloat
-    predict(model, T[z])
+function predict(model::LoessModel, z::Real)
+    predict(model, [z])
 end
 
+function predict(model::LoessModel, zs::AbstractVector)
 
-function predict(model::LoessModel{T}, zs::AbstractVector{T}) where T <: AbstractFloat
+    Base.require_one_based_indexing(zs)
+
     m = size(model.xs, 2)
 
     # in the univariate case, interpret a non-singleton zs as vector of
@@ -179,14 +187,7 @@ function predict(model::LoessModel{T}, zs::AbstractVector{T}) where T <: Abstrac
 end
 
 
-function predict(model::LoessModel{T}, zs::AbstractMatrix{T}) where T <: AbstractFloat
-    ys = Array{T}(undef, size(zs, 1))
-    for i in 1:size(zs, 1)
-        # the vec() here is not necessary on 0.5 anymore
-        ys[i] = predict(model, vec(zs[i,:]))
-    end
-    ys
-end
+predict(model::LoessModel, zs::AbstractMatrix) = map(Base.Fix1(predict, model), eachrow(zs))
 
 """
     tricubic(u)

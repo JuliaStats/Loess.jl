@@ -39,9 +39,11 @@ Returns:
   A `KDTree` object
 
 """
-function KDTree(xs::AbstractMatrix{T},
-                leaf_size_factor=0.05,
-                leaf_diameter_factor=0.0) where T <: AbstractFloat
+function KDTree(
+    xs::AbstractMatrix{T},
+    leaf_size_factor::Real,
+    leaf_diameter_factor::Real
+) where T <: AbstractFloat
 
     n, m = size(xs)
     perm = collect(1:n)
@@ -55,11 +57,13 @@ function KDTree(xs::AbstractMatrix{T},
 
     diam = diameter(bounds)
 
-    leaf_size_cutoff = ceil(Int, leaf_size_factor * n)
+    leaf_size_cutoff = floor(Int, leaf_size_factor * n)
     leaf_diameter_cutoff = leaf_diameter_factor * diam
     verts = Set{Vector{T}}()
 
     # Add a vertex for each corner of the hypercube
+    # This deviates from the original implementation from the paper where the outer verted were
+    # made a bit wider than the data limits.
     for vert in Iterators.product([bounds[:,j] for j in 1:m]...)
         push!(verts, T[vert...])
     end
@@ -113,14 +117,19 @@ Returns:
   Either a `KDLeafNode` or a `KDInternalNode`
 """
 function build_kdtree(xs::AbstractMatrix{T},
-                      perm::AbstractArray,
+                      perm::AbstractVector,
                       bounds::Matrix{T},
-                      leaf_size_cutoff::Int,
-                      leaf_diameter_cutoff::T,
+                      leaf_size_cutoff::Real,
+                      leaf_diameter_cutoff::Real,
                       verts::Set{Vector{T}}) where T
+
+    Base.require_one_based_indexing(xs)
+    Base.require_one_based_indexing(perm)
+
     n, m = size(xs)
 
     if length(perm) <= leaf_size_cutoff || diameter(bounds) <= leaf_diameter_cutoff
+        @debug "Creating leaf node" length(perm) leaf_size_cutoff diameter(bounds) leaf_diameter_cutoff
         return KDLeafNode()
     end
 
@@ -141,19 +150,58 @@ function build_kdtree(xs::AbstractMatrix{T},
         end
     end
 
-    # find the median and partition
-    if isodd(length(perm))
-        mid = (length(perm) + 1) ÷ 2
-        partialsort!(perm, mid, by=i -> xs[i, j])
-        med = xs[perm[mid], j]
-        mid1 = mid
-        mid2 = mid + 1
-    else
-        mid1 = length(perm) ÷ 2
+    # Find the "median" and partition
+    #
+    # The aim of the algorithm is to split the data recursively in two roughly equally sized
+    # subsets. To do so, we'll use the median element of x[:, j] but there are a
+    # few corner cases that require some care: sets with an even number of elements
+    # doesn't have a unique median and ties. Below, we'll list the possibilities.
+    #
+    # - Odd number of elements and no ties, e.g. [1, 2, 3]: the median is
+    #   unambiguously 2 and split the data into [1, 2] and [3]
+    #
+    # - Even number of element and no ties, e.g. [1, 2, 3, 4]: we choose the left middle
+    #   value 2 as median and split the data into [1, 2] and [3, 4]
+    #
+    # - Ties will cause a search to the change in value that divides the set most evenly.
+    #   E.g. [1, 2, 2, 3] uses 2 as median value to split the data into [1, 2, 2] and [3]
+    #   but [1, 1, 2, 2, 2] uses 1 to split into [1, 1] and [2, 2, 2] even though 1 is
+    #   not a proper median value. This avoids that the same value is in two buckets.
+    #
+    # The details here are reversed engineered from the C/Fortran implementation wrapped
+    # by R and also distribtued on NETLIB.
+    mid = (length(perm) + 1) ÷ 2
+    @debug "Candidate median index and median value" mid xs[perm[mid], j]
+
+    offset = 0
+    local mid1, mid2
+    while true
+        mid1 = mid + offset
         mid2 = mid1 + 1
-        partialsort!(perm, mid1:mid2, by=i -> xs[i, j])
-        med = (xs[perm[mid1], j] + xs[perm[mid2], j]) / 2
+        if mid1 < 1
+            @debug "mid1 is zero. All elements are identical. Creating vertex and then two leaves" mid1 length(perm) xs[perm[mid], j]
+            offset = mid1 = 0
+            mid2 = length(perm) + 1
+            break
+        end
+        if mid2 > length(perm)
+            @debug "mid2 is out of bounds. Continuing with negative offset" mid2 length(perm) offset
+            # This makes the offset 0, 1, -1, 2, -2, ...
+            offset = -offset + (offset <= 0)
+            continue
+        end
+        p12 = partialsort!(perm, mid1:mid2, by = i -> xs[i, j])
+        if xs[p12[1], j] == xs[p12[2], j]
+            @debug "tie! Adjusting offset" xs[p12[1], j] xs[p12[2], j] offset
+            # This makes the offset 0, 1, -1, 2, -2, ...
+            offset = -offset + (offset <= 0)
+        else
+            break
+        end
     end
+    mid += offset
+    med = xs[perm[mid], j]
+    @debug "Accepted median index and median value" mid med
 
     leftbounds = copy(bounds)
     leftbounds[2, j] = med
@@ -198,7 +246,7 @@ end
 Traverse the tree `kdtree` to the bottom and return the verticies of
 the bounding hypercube of the leaf node containing the point `x`.
 """
-function traverse(kdtree::KDTree{T}, x::AbstractVector{T}) where T
+function traverse(kdtree::KDTree, x::AbstractVector)
     m = size(kdtree.bounds, 2)
 
     if length(x) != m
