@@ -80,8 +80,12 @@ function loess(
         end
 
         # distance to each point
-        for i in 1:n
-            ds[i] = euclidean(vec(vert), vec(xs[i,:]))
+        @inbounds for i in 1:n
+            s = zero(T)
+            for j in 1:m
+                s += (xs[i, j] - vert[j])^2
+            end
+            ds[i] = sqrt(s)
         end
 
         # find the q closest points
