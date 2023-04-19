@@ -5,18 +5,18 @@ abstract type KDNode end
 struct KDLeafNode <: KDNode
 end
 
-struct KDInternalNode{T <: AbstractFloat} <: KDNode
+struct KDInternalNode{T <: AbstractFloat, LN <: KDNode, RN <: KDNode} <: KDNode
     j::Int             # dimension on which the data is split
     med::T             # median value where the split occours
-    leftnode::KDNode
-    rightnode::KDNode
+    leftnode::LN
+    rightnode::RN
 end
 
 
-struct KDTree{T <: AbstractFloat}
-    xs::AbstractMatrix{T} # A matrix of n, m-dimensional observations
+struct KDTree{T <: AbstractFloat, N <: KDNode}
+    xs::Matrix{T}         # A matrix of n, m-dimensional observations
     perm::Vector{Int}     # permutation of data to avoid modifying xs
-    root::KDNode          # root node
+    root::N               # root node
     verts::Set{Vector{T}}
     bounds::Matrix{T}     # Top-level bounding box
 end
@@ -226,7 +226,7 @@ function build_kdtree(xs::AbstractMatrix{T},
         push!(verts, T[vert...])
     end
 
-    KDInternalNode{T}(j, med, leftnode, rightnode)
+    KDInternalNode(j, med, leftnode, rightnode)
 end
 
 
@@ -256,6 +256,7 @@ function traverse(kdtree::KDTree{T}, x::NTuple{N,T}) where {N,T}
 
     for j in 1:N
         if x[j] < kdtree.bounds[1, j] || x[j] > kdtree.bounds[2, j]
+            @show x, kdtree.bounds
             error(
                   """
                   Loess cannot perform extrapolation. Predict can only be applied
@@ -267,15 +268,18 @@ function traverse(kdtree::KDTree{T}, x::NTuple{N,T}) where {N,T}
 
     bounds = copy(kdtree.bounds)
     node = kdtree.root
-    while !isa(node, KDLeafNode)
-        if x[node.j] <= node.med
-            bounds[2, node.j] = node.med
-            node = node.leftnode
-        else
-            bounds[1, node.j] = node.med
-            node = node.rightnode
-        end
-    end
 
-    bounds_verts(bounds)
+    return _traverse!(bounds, node, x)
 end
+
+_traverse!(bounds, node::KDLeafNode, x) = bounds
+function _traverse!(bounds, node::KDInternalNode, x)
+    if x[node.j] <= node.med
+        bounds[2, node.j] = node.med
+        return _traverse!(bounds, node.leftnode, x)
+    else
+        bounds[1, node.j] = node.med
+        return _traverse!(bounds, node.rightnode, x)
+    end
+end
+

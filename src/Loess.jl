@@ -10,11 +10,11 @@ export loess, predict
 include("kd.jl")
 
 
-mutable struct LoessModel{T <: AbstractFloat}
-    xs::AbstractMatrix{T} # An n by m predictor matrix containing n observations from m predictors
-    ys::AbstractVector{T} # A length n response vector
+struct LoessModel{T <: AbstractFloat, N <: KDNode}
+    xs::Matrix{T} # An n by m predictor matrix containing n observations from m predictors
+    ys::Vector{T} # A length n response vector
     predictions_and_gradients::Dict{Vector{T}, Vector{T}} # kd-tree vertexes mapped to prediction and gradient at each vertex
-    kdtree::KDTree{T}
+    kdtree::KDTree{T, N}
 end
 
 """
@@ -128,7 +128,7 @@ function loess(
         ]
     end
 
-    LoessModel{T}(xs, ys, predictions_and_gradients, kdtree)
+    LoessModel(xs, ys, predictions_and_gradients, kdtree)
 end
 
 loess(xs::AbstractVector{T}, ys::AbstractVector{T}; kwargs...) where {T<:AbstractFloat} =
