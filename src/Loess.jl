@@ -50,9 +50,6 @@ function loess(
 
     n, m = size(xs)
     q = floor(Int, span * n)
-    if q < degree + 1
-        throw(ArgumentError("neighborhood size must be larger than degree+1=$(degree + 1) but was $q. Try increasing the value of span."))
-    end
 
     # TODO: We need to keep track of how we are normalizing so we can
     # correctly apply predict to unnormalized data. We should have a normalize
@@ -90,6 +87,7 @@ function loess(
         # find the q closest points
         partialsort!(perm, 1:q, by=i -> ds[i])
         dmax = maximum([ds[perm[i]] for i = 1:q])
+        dmax = iszero(dmax) ? one(dmax) : dmax
 
         for i in 1:q
             pᵢ = perm[i]
