@@ -44,6 +44,10 @@ function loess(
     degree::Integer = 2,
     cell::AbstractFloat = 0.2
 ) where T<:AbstractFloat
+
+    Base.require_one_based_indexing(xs)
+    Base.require_one_based_indexing(ys)
+
     if size(xs, 1) != size(ys, 1)
         throw(DimensionMismatch("Predictor and response arrays must of the same length"))
     end
@@ -177,18 +181,22 @@ end
 
 function predict(model::LoessModel, zs::AbstractVector)
     if size(model.xs, 2) > 1
-        throw(ArgumentError("Multivariate blending not yet implemented"))
+        throw(ArgumentError("multivariate blending not yet implemented"))
     end
 
-    predict.(Ref(model), zs)
+    return [predict(model, z) for z in zs]
 end
 
 function predict(model::LoessModel, zs::AbstractMatrix)
-    if size(model.xs, 2) > 1
-        throw(ArgumentError("Multivariate blending not yet implemented"))
+    if size(model.xs, 2) != size(zs, 2)
+        throw(DimensionMismatch("number of columns in input matrix must match the number of columns in the model matrix"))
     end
 
-    return [predict(model, z) for z in vec(zs)]
+    if size(zs, 2) == 1
+        return predict(model, vec(zs))
+    else
+        return [predict(model, row) for row in eachrow(zs)]
+    end
 end
 
 """

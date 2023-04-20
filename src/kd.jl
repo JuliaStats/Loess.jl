@@ -256,7 +256,6 @@ function traverse(kdtree::KDTree{T}, x::NTuple{N,T}) where {N,T}
 
     for j in 1:N
         if x[j] < kdtree.bounds[1, j] || x[j] > kdtree.bounds[2, j]
-            @show x, kdtree.bounds
             error(
                   """
                   Loess cannot perform extrapolation. Predict can only be applied
