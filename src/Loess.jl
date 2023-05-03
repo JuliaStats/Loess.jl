@@ -10,11 +10,11 @@ export loess, predict
 include("kd.jl")
 
 
-struct LoessModel{T <: AbstractFloat, N <: KDNode}
+struct LoessModel{T <: AbstractFloat}
     xs::Matrix{T} # An n by m predictor matrix containing n observations from m predictors
     ys::Vector{T} # A length n response vector
     predictions_and_gradients::Dict{Vector{T}, Vector{T}} # kd-tree vertexes mapped to prediction and gradient at each vertex
-    kdtree::KDTree{T, N}
+    kdtree::KDTree{T}
 end
 
 """
