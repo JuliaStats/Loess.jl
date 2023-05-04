@@ -1,22 +1,17 @@
 # Simple static kd-trees.
 
-abstract type KDNode end
-
-struct KDLeafNode <: KDNode
-end
-
-struct KDInternalNode{T <: AbstractFloat} <: KDNode
+struct KDNode{T <: AbstractFloat}
     j::Int             # dimension on which the data is split
     med::T             # median value where the split occours
-    leftnode::KDNode
-    rightnode::KDNode
+    leftnode::Union{Nothing, KDNode{T}}
+    rightnode::Union{Nothing, KDNode{T}}
 end
 
 
 struct KDTree{T <: AbstractFloat}
-    xs::AbstractMatrix{T} # A matrix of n, m-dimensional observations
+    xs::Matrix{T}         # A matrix of n, m-dimensional observations
     perm::Vector{Int}     # permutation of data to avoid modifying xs
-    root::KDNode          # root node
+    root::KDNode{T}       # root node
     verts::Set{Vector{T}}
     bounds::Matrix{T}     # Top-level bounding box
 end
@@ -114,7 +109,7 @@ Modifies:
   `perm`, `verts`
 
 Returns:
-  Either a `KDLeafNode` or a `KDInternalNode`
+  Either a `nothing` or a `KDNode`
 """
 function build_kdtree(xs::AbstractMatrix{T},
                       perm::AbstractVector,
@@ -130,7 +125,7 @@ function build_kdtree(xs::AbstractMatrix{T},
 
     if length(perm) <= leaf_size_cutoff || diameter(bounds) <= leaf_diameter_cutoff
         @debug "Creating leaf node" length(perm) leaf_size_cutoff diameter(bounds) leaf_diameter_cutoff
-        return KDLeafNode()
+        return nothing
     end
 
     # split on the dimension with the largest spread
@@ -226,7 +221,7 @@ function build_kdtree(xs::AbstractMatrix{T},
         push!(verts, T[vert...])
     end
 
-    KDInternalNode{T}(j, med, leftnode, rightnode)
+    KDNode(j, med, leftnode, rightnode)
 end
 
 
@@ -246,14 +241,15 @@ end
 Traverse the tree `kdtree` to the bottom and return the verticies of
 the bounding hypercube of the leaf node containing the point `x`.
 """
-function traverse(kdtree::KDTree, x::AbstractVector)
+function traverse(kdtree::KDTree{T}, x::NTuple{N,T}) where {N,T}
+
     m = size(kdtree.bounds, 2)
 
-    if length(x) != m
+    if N != m
         throw(DimensionMismatch("$(m)-dimensional kd-tree searched with a length $(length(x)) vector."))
     end
 
-    for j in 1:m
+    for j in 1:N
         if x[j] < kdtree.bounds[1, j] || x[j] > kdtree.bounds[2, j]
             error(
                   """
@@ -266,15 +262,18 @@ function traverse(kdtree::KDTree, x::AbstractVector)
 
     bounds = copy(kdtree.bounds)
     node = kdtree.root
-    while !isa(node, KDLeafNode)
-        if x[node.j] <= node.med
-            bounds[2, node.j] = node.med
-            node = node.leftnode
-        else
-            bounds[1, node.j] = node.med
-            node = node.rightnode
-        end
-    end
 
-    bounds_verts(bounds)
+    return _traverse!(bounds, node, x)
 end
+
+_traverse!(bounds, node::Nothing, x) = bounds
+function _traverse!(bounds, node::KDNode, x)
+    if x[node.j] <= node.med
+        bounds[2, node.j] = node.med
+        return _traverse!(bounds, node.leftnode, x)
+    else
+        bounds[1, node.j] = node.med
+        return _traverse!(bounds, node.rightnode, x)
+    end
+end
+

@@ -10,9 +10,9 @@ export loess, predict
 include("kd.jl")
 
 
-mutable struct LoessModel{T <: AbstractFloat}
-    xs::AbstractMatrix{T} # An n by m predictor matrix containing n observations from m predictors
-    ys::AbstractVector{T} # A length n response vector
+struct LoessModel{T <: AbstractFloat}
+    xs::Matrix{T} # An n by m predictor matrix containing n observations from m predictors
+    ys::Vector{T} # A length n response vector
     predictions_and_gradients::Dict{Vector{T}, Vector{T}} # kd-tree vertexes mapped to prediction and gradient at each vertex
     kdtree::KDTree{T}
 end
@@ -44,6 +44,10 @@ function loess(
     degree::Integer = 2,
     cell::AbstractFloat = 0.2
 ) where T<:AbstractFloat
+
+    Base.require_one_based_indexing(xs)
+    Base.require_one_based_indexing(ys)
+
     if size(xs, 1) != size(ys, 1)
         throw(DimensionMismatch("Predictor and response arrays must of the same length"))
     end
@@ -80,8 +84,12 @@ function loess(
         end
 
         # distance to each point
-        for i in 1:n
-            ds[i] = euclidean(vec(vert), vec(xs[i,:]))
+        @inbounds for i in 1:n
+            s = zero(T)
+            for j in 1:m
+                s += (xs[i, j] - vert[j])^2
+            end
+            ds[i] = sqrt(s)
         end
 
         # find the q closest points
@@ -128,7 +136,7 @@ function loess(
         ]
     end
 
-    LoessModel{T}(xs, ys, predictions_and_gradients, kdtree)
+    LoessModel(xs, ys, predictions_and_gradients, kdtree)
 end
 
 loess(xs::AbstractVector{T}, ys::AbstractVector{T}; kwargs...) where {T<:AbstractFloat} =
@@ -153,49 +161,43 @@ end
 # Returns:
 #   A length n' vector of predicted response values.
 #
-function predict(model::LoessModel, z::Real)
-    predict(model, [z])
+function predict(model::LoessModel{T}, z::Number) where T
+    adjacent_verts = traverse(model.kdtree, (T(z),))
+
+    @assert(length(adjacent_verts) == 2)
+    v₁, v₂ = adjacent_verts[1][1], adjacent_verts[2][1]
+
+    if z == v₁ || z == v₂
+        return first(model.predictions_and_gradients[[z]])
+    end
+
+    y₁, dy₁ = model.predictions_and_gradients[[v₁]]
+    y₂, dy₂ = model.predictions_and_gradients[[v₂]]
+
+    b_int = cubic_interpolation(v₁, y₁, dy₁, v₂, y₂, dy₂)
+
+    return evalpoly(z, b_int)
 end
 
 function predict(model::LoessModel, zs::AbstractVector)
-
-    Base.require_one_based_indexing(zs)
-
-    m = size(model.xs, 2)
-
-    # in the univariate case, interpret a non-singleton zs as vector of
-    # ponits, not one point
-    if m == 1 && length(zs) > 1
-        return predict(model, reshape(zs, (length(zs), 1)))
+    if size(model.xs, 2) > 1
+        throw(ArgumentError("multivariate blending not yet implemented"))
     end
 
-    if length(zs) != m
-        error("$(m)-dimensional model applied to length $(length(zs)) vector")
-    end
-
-    adjacent_verts = traverse(model.kdtree, zs)
-
-    if m == 1
-        @assert(length(adjacent_verts) == 2)
-        z = zs[1]
-        v₁, v₂ = adjacent_verts[1][1], adjacent_verts[2][1]
-
-        if z == v₁ || z == v₂
-            return first(model.predictions_and_gradients[[z]])
-        end
-
-        y₁, dy₁ = model.predictions_and_gradients[[v₁]]
-        y₂, dy₂ = model.predictions_and_gradients[[v₂]]
-
-        b_int = cubic_interpolation(v₁, y₁, dy₁, v₂, y₂, dy₂)
-
-        return evalpoly(z, b_int)
-    else
-        error("Multivariate blending not yet implemented")
-    end
+    return [predict(model, z) for z in zs]
 end
 
-predict(model::LoessModel, zs::AbstractMatrix) = map(Base.Fix1(predict, model), eachrow(zs))
+function predict(model::LoessModel, zs::AbstractMatrix)
+    if size(model.xs, 2) != size(zs, 2)
+        throw(DimensionMismatch("number of columns in input matrix must match the number of columns in the model matrix"))
+    end
+
+    if size(zs, 2) == 1
+        return predict(model, vec(zs))
+    else
+        return [predict(model, row) for row in eachrow(zs)]
+    end
+end
 
 """
     tricubic(u)
