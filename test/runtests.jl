@@ -25,6 +25,12 @@ using RDatasets
     @test Loess.predict(model,x) ≈ y
 end
 
+@testset "reshaped views" begin
+    # See: https://github.com/MakieOrg/AlgebraOfGraphics.jl/pull/462
+    # and: https://github.com/JuliaStats/Loess.jl/pull/70
+    @test Loess.loess(reshape(view(rand(4), 1:4), (4, 1)), rand(4)) isa Loess.LoessModel
+end
+
 @testset "sine" begin
     x = 1:10
     y = sin.(1:10)

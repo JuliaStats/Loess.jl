@@ -65,7 +65,7 @@ function KDTree(
 
     root = build_kdtree(xs, perm, bounds, leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
-    KDTree(xs, collect(1:n), root, verts, bounds)
+    KDTree(convert(Matrix{T}, xs), collect(1:n), root, verts, bounds)
 end
 
 
@@ -276,4 +276,3 @@ function _traverse!(bounds, node::KDNode, x)
         return _traverse!(bounds, node.rightnode, x)
     end
 end
-

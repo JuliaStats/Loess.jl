@@ -136,7 +136,7 @@ function loess(
         ]
     end
 
-    LoessModel(xs, ys, predictions_and_gradients, kdtree)
+    LoessModel(convert(Matrix{T}, xs), convert(Vector{T}, ys), predictions_and_gradients, kdtree)
 end
 
 loess(xs::AbstractVector{T}, ys::AbstractVector{T}; kwargs...) where {T<:AbstractFloat} =
