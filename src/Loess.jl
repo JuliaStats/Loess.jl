@@ -123,12 +123,16 @@ function loess(
             end
         end
 
-        if VERSION < v"1.7.0-DEV.1188"
-            F = qr(us, Val(true))
+        if isposdef(us' * us)
+            coefs = cholesky(us' * us) \ (us' * vs)
         else
-            F = qr(us, ColumnNorm())
+            if VERSION < v"1.7.0-DEV.1188"
+                F = qr(us, Val(true))
+            else
+                F = qr(us, ColumnNorm())
+            end
+            coefs = F\vs
         end
-        coefs = F\vs
 
         predictions_and_gradients[vert] = [
             us[1, :]' * coefs; # the prediction
