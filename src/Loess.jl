@@ -123,15 +123,16 @@ function loess(
             end
         end
 
-        if isposdef(us' * us)
-            coefs = cholesky(us' * us) \ (us' * vs)
-        else
+        coefs = Matrix{Real}(undef, size(us, 2), 1)
+        try
+            coefs = cholesky(us * us') \ (us' * vs)
+        catch PosDefException
             if VERSION < v"1.7.0-DEV.1188"
                 F = qr(us, Val(true))
             else
                 F = qr(us, ColumnNorm())
             end
-            coefs = F\vs
+            coefs = F \ vs
         end
 
         predictions_and_gradients[vert] = [
