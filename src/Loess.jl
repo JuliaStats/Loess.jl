@@ -122,10 +122,10 @@ function loess(
                 xl *= x
             end
         end
-
+        
         coefs = Matrix{Real}(undef, size(us, 2), 1)
         try
-            coefs = cholesky(us * us') \ (us' * vs)
+            coefs = cholesky(us' * us) \ (us' * vs)
         catch PosDefException
             if VERSION < v"1.7.0-DEV.1188"
                 F = qr(us, Val(true))
