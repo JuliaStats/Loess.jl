@@ -22,13 +22,14 @@ using RDatasets
     x = [13.0,14.0,14.35,15.0,16.0]
     y = [0.369486,  0.355579, 0.3545, 0.356952, 0.36883]
     model = loess(x,y)
-    @test Loess.predict(model,x) ≈ y
+    @test predict(model,x) ≈ y
+    @test all(isapprox(0; atol=1e-12), residuals(model))
 end
 
 @testset "reshaped views" begin
     # See: https://github.com/MakieOrg/AlgebraOfGraphics.jl/pull/462
     # and: https://github.com/JuliaStats/Loess.jl/pull/70
-    @test Loess.loess(reshape(view(rand(4), 1:4), (4, 1)), rand(4)) isa Loess.LoessModel
+    @test loess(reshape(view(rand(4), 1:4), (4, 1)), rand(4)) isa Loess.LoessModel
 end
 
 @testset "sine" begin
