@@ -170,7 +170,13 @@ function build_kdtree(xs::AbstractMatrix{T},
 
     offset = 0
     local mid1, mid2
-    while true
+    do_loop = length(xs) < 100 && any(!=(first(xs)), xs)
+    if !do_loop
+        @debug "All elements are identical. Creating vertex and then two leaves" mid1 length(perm) xs[perm[mid], j]
+        offset = mid1 = 0
+        mid2 = length(perm) + 1
+    end
+    while do_loop
         mid1 = mid + offset
         mid2 = mid1 + 1
         if mid1 < 1
