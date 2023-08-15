@@ -41,7 +41,25 @@ function KDTree(
 ) where T <: AbstractFloat
 
     n, m = size(xs)
-    perm = collect(1:n)
+
+    # split on the dimension with the largest spread
+    # maxspread, j = findmax(maximum(xs[perm, k]) - minimum(xs[perm, k]) for k in 1:m)
+    j = 1
+    maxspread = 0
+    for k in 1:m
+        xmin = Inf
+        xmax = -Inf
+        for i in 1:n
+            xmin = min(xmin, xs[i, k])
+            xmax = max(xmax, xs[i, k])
+        end
+        if xmax - xmin > maxspread
+            maxspread = xmax - xmin
+            j = k
+        end
+    end
+
+    perm = sortperm(view(xs, :, j))
 
     bounds = Array{T}(undef, 2, m)
     for j in 1:m
@@ -63,7 +81,7 @@ function KDTree(
         push!(verts, T[vert...])
     end
 
-    root = build_kdtree(xs, perm, bounds, leaf_size_cutoff, leaf_diameter_cutoff, verts)
+    root = build_kdtree(xs, copy(perm), bounds, leaf_size_cutoff, leaf_diameter_cutoff, verts, j)
 
     KDTree(convert(Matrix{T}, xs), collect(1:n), root, verts, bounds)
 end
@@ -116,33 +134,17 @@ function build_kdtree(xs::AbstractMatrix{T},
                       bounds::Matrix{T},
                       leaf_size_cutoff::Real,
                       leaf_diameter_cutoff::Real,
-                      verts::Set{Vector{T}}) where T
+                      verts::Set{Vector{T}}, j::Int) where T
 
     Base.require_one_based_indexing(xs)
     Base.require_one_based_indexing(perm)
 
     n, m = size(xs)
+    xjs = view(xs, :, j)
 
     if length(perm) <= leaf_size_cutoff || diameter(bounds) <= leaf_diameter_cutoff
         @debug "Creating leaf node" length(perm) leaf_size_cutoff diameter(bounds) leaf_diameter_cutoff
         return nothing
-    end
-
-    # split on the dimension with the largest spread
-    # maxspread, j = findmax(maximum(xs[perm, k]) - minimum(xs[perm, k]) for k in 1:m)
-    j = 1
-    maxspread = 0
-    for k in 1:m
-        xmin = Inf
-        xmax = -Inf
-        for i in perm
-            xmin = min(xmin, xs[i, k])
-            xmax = max(xmax, xs[i, k])
-        end
-        if xmax - xmin > maxspread
-            maxspread = xmax - xmin
-            j = k
-        end
     end
 
     # Find the "median" and partition
@@ -170,14 +172,7 @@ function build_kdtree(xs::AbstractMatrix{T},
 
     offset = 0
     local mid1, mid2
-    do_loop = length(xs) < 100 && any(!=(first(xs)), xs)
-    if !do_loop
-        @debug "All elements are identical. Creating vertex and then two leaves" mid1 length(perm) xs[perm[mid], j]
-        offset = 0
-        mid1 = length(perm) ÷ 2
-        mid2 = mid1 + 1
-    end
-    while do_loop
+    while true
         mid1 = mid + offset
         mid2 = mid1 + 1
         if mid1 < 1
@@ -192,9 +187,8 @@ function build_kdtree(xs::AbstractMatrix{T},
             offset = -offset + (offset <= 0)
             continue
         end
-        p12 = partialsort!(perm, mid1:mid2, by = i -> xs[i, j])
-        if xs[p12[1], j] == xs[p12[2], j]
-            @debug "tie! Adjusting offset" xs[p12[1], j] xs[p12[2], j] offset
+        if xjs[perm[mid1]] == xjs[perm[mid2]]
+            # @debug "tie! Adjusting offset" xs[p12[1], j] xs[p12[2], j] offset
             # This makes the offset 0, 1, -1, 2, -2, ...
             offset = -offset + (offset <= 0)
         else
@@ -202,18 +196,18 @@ function build_kdtree(xs::AbstractMatrix{T},
         end
     end
     mid += offset
-    med = xs[perm[mid], j]
+    med = xjs[perm[mid]]
     @debug "Accepted median index and median value" mid med
 
     leftbounds = copy(bounds)
     leftbounds[2, j] = med
     leftnode = build_kdtree(xs, view(perm,1:mid1), leftbounds,
-                            leaf_size_cutoff, leaf_diameter_cutoff, verts)
+                            leaf_size_cutoff, leaf_diameter_cutoff, verts, j)
 
     rightbounds = copy(bounds)
     rightbounds[1, j] = med
     rightnode = build_kdtree(xs, view(perm,mid2:length(perm)), rightbounds,
-                             leaf_size_cutoff, leaf_diameter_cutoff, verts)
+                             leaf_size_cutoff, leaf_diameter_cutoff, verts, j)
 
     coords = Array{Array}(undef, m)
     for i in 1:m
