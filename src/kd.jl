@@ -88,7 +88,6 @@ function diameter(bounds::Matrix)
     euclidean(vec(bounds[1,:]), vec(bounds[2,:]))
 end
 
-
 """
     build_kdtree(xs, perm, bounds, leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
@@ -185,7 +184,11 @@ function build_kdtree(xs::AbstractMatrix{T},
             offset = -offset + (offset <= 0)
             continue
         end
-        p12 = partialsort!(perm, mid1:mid2, by = i -> xs[i, j])
+        # Use a let block to avoid overhead from captured variable in closure
+        # Ref https://github.com/JuliaLang/julia/issues/15276
+        p12 = let j = j
+            partialsort!(perm, mid1:mid2, by = i -> xs[i, j])
+        end
         if xs[p12[1], j] == xs[p12[2], j]
             @debug "tie! Adjusting offset" xs[p12[1], j] xs[p12[2], j] offset
             # This makes the offset 0, 1, -1, 2, -2, ...
