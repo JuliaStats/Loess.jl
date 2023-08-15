@@ -59,8 +59,6 @@ function KDTree(
         end
     end
 
-    perm = sortperm(view(xs, :, j))
-
     bounds = Array{T}(undef, 2, m)
     for j in 1:m
         col = xs[:,j]
@@ -81,12 +79,11 @@ function KDTree(
         push!(verts, T[vert...])
     end
 
-    root = build_kdtree(xs, copy(perm), bounds, leaf_size_cutoff, leaf_diameter_cutoff, verts, j)
+    perm = collect(1:n)
+    root = build_kdtree(xs, perm, bounds, leaf_size_cutoff, leaf_diameter_cutoff, verts, j)
 
-    KDTree(convert(Matrix{T}, xs), collect(1:n), root, verts, bounds)
+    KDTree(convert(Matrix{T}, xs), perm, root, verts, bounds)
 end
-
-
 
 
 """
@@ -108,7 +105,7 @@ end
 
 
 """
-    build_kdtree(xs, perm, bounds, leaf_size_cutoff, leaf_diameter_cutoff, verts)
+    build_kdtree(xs, perm, bounds, leaf_size_cutoff, leaf_diameter_cutoff, verts, j)
 
 Recursively build a kd-tree
 
@@ -122,6 +119,7 @@ Args:
   - `leaf_diameter_cutoff`: stop splitting on nodes with less
        than this diameter.
   - `verts`: current set of vertexes
+  - `j`: the column in `xs` to use for organizing
 
 Modifies:
   `perm`, `verts`
@@ -134,13 +132,17 @@ function build_kdtree(xs::AbstractMatrix{T},
                       bounds::Matrix{T},
                       leaf_size_cutoff::Real,
                       leaf_diameter_cutoff::Real,
-                      verts::Set{Vector{T}}, j::Int) where T
+                      verts::Set{Vector{T}}, j::Int=1) where T
 
     Base.require_one_based_indexing(xs)
     Base.require_one_based_indexing(perm)
 
     n, m = size(xs)
-    xjs = view(xs, :, j)
+    if !issorted(view(xs, perm, j))
+        @debug "received unsorted data, sorting"
+        sortperm!(perm, view(xs, :, j))
+    end
+    xjs = view(xs, perm, j)
 
     if length(perm) <= leaf_size_cutoff || diameter(bounds) <= leaf_diameter_cutoff
         @debug "Creating leaf node" length(perm) leaf_size_cutoff diameter(bounds) leaf_diameter_cutoff
@@ -167,8 +169,8 @@ function build_kdtree(xs::AbstractMatrix{T},
     #
     # The details here are reversed engineered from the C/Fortran implementation wrapped
     # by R and also distribtued on NETLIB.
-    mid = (length(perm) + 1) ÷ 2
-    @debug "Candidate median index and median value" mid xs[perm[mid], j]
+    mid = (length(xjs) + 1) ÷ 2
+    @debug "Candidate median index and median value" mid xs[mid, j]
 
     offset = 0
     local mid1, mid2
@@ -176,18 +178,18 @@ function build_kdtree(xs::AbstractMatrix{T},
         mid1 = mid + offset
         mid2 = mid1 + 1
         if mid1 < 1
-            @debug "mid1 is zero. All elements are identical. Creating vertex and then two leaves" mid1 length(perm) xs[perm[mid], j]
+            @debug "mid1 is zero. All elements are identical. Creating vertex and then two leaves" mid1 length(xjs) xs[mid, j]
             offset = mid1 = 0
-            mid2 = length(perm) + 1
+            mid2 = length(xjs) + 1
             break
         end
-        if mid2 > length(perm)
-            @debug "mid2 is out of bounds. Continuing with negative offset" mid2 length(perm) offset
+        if mid2 > length(xjs)
+            @debug "mid2 is out of bounds. Continuing with negative offset" mid2 length(xjs) offset
             # This makes the offset 0, 1, -1, 2, -2, ...
             offset = -offset + (offset <= 0)
             continue
         end
-        if xjs[perm[mid1]] == xjs[perm[mid2]]
+        if xjs[mid1] == xjs[mid2]
             # @debug "tie! Adjusting offset" xs[p12[1], j] xs[p12[2], j] offset
             # This makes the offset 0, 1, -1, 2, -2, ...
             offset = -offset + (offset <= 0)
@@ -196,7 +198,7 @@ function build_kdtree(xs::AbstractMatrix{T},
         end
     end
     mid += offset
-    med = xjs[perm[mid]]
+    med = xjs[mid]
     @debug "Accepted median index and median value" mid med
 
     leftbounds = copy(bounds)
