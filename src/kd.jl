@@ -42,23 +42,6 @@ function KDTree(
 
     n, m = size(xs)
 
-    # split on the dimension with the largest spread
-    # maxspread, j = findmax(maximum(xs[perm, k]) - minimum(xs[perm, k]) for k in 1:m)
-    j = 1
-    maxspread = 0
-    for k in 1:m
-        xmin = Inf
-        xmax = -Inf
-        for i in 1:n
-            xmin = min(xmin, xs[i, k])
-            xmax = max(xmax, xs[i, k])
-        end
-        if xmax - xmin > maxspread
-            maxspread = xmax - xmin
-            j = k
-        end
-    end
-
     bounds = Array{T}(undef, 2, m)
     for j in 1:m
         col = xs[:,j]
@@ -80,7 +63,7 @@ function KDTree(
     end
 
     perm = collect(1:n)
-    root = build_kdtree(xs, perm, bounds, leaf_size_cutoff, leaf_diameter_cutoff, verts, j)
+    root = build_kdtree(xs, perm, bounds, leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
     KDTree(convert(Matrix{T}, xs), perm, root, verts, bounds)
 end
@@ -103,9 +86,35 @@ function diameter(bounds::Matrix)
     euclidean(vec(bounds[1,:]), vec(bounds[2,:]))
 end
 
+"""
+    _select_j(xs::AbstractMatrix{T})
+
+Select the column for sorting the rows xs based on the column with the largest spread.
+"""
+function _select_j(xs::AbstractMatrix{T}) where {T <: AbstractFloat}
+    size(xs, 2) == 1 && return 1
+
+    # split on the dimension with the largest spread
+    # maxspread, j = findmax(maximum(xs[perm, k]) - minimum(xs[perm, k]) for k in 1:m)
+    j = 1
+    maxspread = 0
+    @inbounds for k in axes(xs, 2)
+        xmin = Inf
+        xmax = -Inf
+        @inbounds for i in axes(xs, 1)
+            xmin = min(xmin, xs[i, k])
+            xmax = max(xmax, xs[i, k])
+        end
+        if xmax - xmin > maxspread
+            maxspread = xmax - xmin
+            j = k
+        end
+    end
+    return j
+end
 
 """
-    build_kdtree(xs, perm, bounds, leaf_size_cutoff, leaf_diameter_cutoff, verts, j)
+    build_kdtree(xs, perm, bounds, leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
 Recursively build a kd-tree
 
@@ -119,7 +128,6 @@ Args:
   - `leaf_diameter_cutoff`: stop splitting on nodes with less
        than this diameter.
   - `verts`: current set of vertexes
-  - `j`: the column in `xs` to use for organizing
 
 Modifies:
   `perm`, `verts`
@@ -132,11 +140,12 @@ function build_kdtree(xs::AbstractMatrix{T},
                       bounds::Matrix{T},
                       leaf_size_cutoff::Real,
                       leaf_diameter_cutoff::Real,
-                      verts::Set{Vector{T}}, j::Int=1) where T
+                      verts::Set{Vector{T}}) where T
 
     Base.require_one_based_indexing(xs)
     Base.require_one_based_indexing(perm)
 
+    j = _select_j(xs)
     n, m = size(xs)
     if !issorted(view(xs, perm, j))
         @debug "received unsorted data, sorting"
@@ -204,12 +213,12 @@ function build_kdtree(xs::AbstractMatrix{T},
     leftbounds = copy(bounds)
     leftbounds[2, j] = med
     leftnode = build_kdtree(xs, view(perm,1:mid1), leftbounds,
-                            leaf_size_cutoff, leaf_diameter_cutoff, verts, j)
+                            leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
     rightbounds = copy(bounds)
     rightbounds[1, j] = med
     rightnode = build_kdtree(xs, view(perm,mid2:length(perm)), rightbounds,
-                             leaf_size_cutoff, leaf_diameter_cutoff, verts, j)
+                             leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
     coords = Array{Array}(undef, m)
     for i in 1:m
