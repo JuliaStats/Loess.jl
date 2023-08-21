@@ -1,11 +1,11 @@
 module Loess
 
 import Distances: euclidean
-import StatsAPI: predict, residuals
+import StatsAPI: fitted, predict, residuals
 
 using Statistics, LinearAlgebra
 
-export loess, predict, residuals
+export loess, fitted, predict, residuals
 
 include("kd.jl")
 
@@ -199,10 +199,9 @@ function predict(model::LoessModel, zs::AbstractMatrix)
     end
 end
 
-function residuals(model::LoessModel)
-    yhat = predict(model, model.xs)
-    return yhat - model.ys
-end
+fitted(model::LoessModel) = predict(model, model.xs)
+
+residuals(model::LoessModel) = fitted(model) .- model.ys
 
 """
     tricubic(u)
