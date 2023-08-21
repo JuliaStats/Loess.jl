@@ -22,7 +22,7 @@ using RDatasets
     x = [13.0,14.0,14.35,15.0,16.0]
     y = [0.369486,  0.355579, 0.3545, 0.356952, 0.36883]
     model = loess(x,y)
-    @test predict(model,x) ≈ y
+    @test fitted(model) ≈ y
     @test all(isapprox(0; atol=1e-12), residuals(model))
 end
 
