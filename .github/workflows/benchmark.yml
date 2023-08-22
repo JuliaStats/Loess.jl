@@ -37,4 +37,9 @@ jobs:
                   using PkgBenchmark, Loess
                   juliacmd = `$(Base.julia_cmd()) -O3 -e "using Pkg; Pkg.update()"`
                   config = BenchmarkConfig(; id="origin/HEAD", juliacmd)
-                  export_markdown(stdout, judge(Loess, config; verbose=true))'
+                  export_markdown("benchmark.md", judge(Loess, config; verbose=true))'
+          - name: Comment PR
+            uses: thollander/actions-comment-pull-request@v2
+            with:
+              filePath: "benchmark.md"
+              comment_tag: benchmark
