@@ -1,0 +1,40 @@
+name: benchmarks
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+    paths-ignore:
+      - 'LICENSE.md'
+      - 'README.md'
+      - 'docs/**'
+      - 'format/**'
+      - 'test/**'
+jobs:
+    benchmarks:
+        runs-on: ubuntu-latest
+        strategy:
+          fail-fast: false
+        steps:
+          - uses: actions/checkout@v3
+          - uses: julia-actions/setup-julia@v1
+            with:
+              version: "1"
+          - uses: julia-actions/cache@v1
+          - uses: julia-actions/julia-buildpkg@v1
+          - name: Benchmark
+            run: |
+              git fetch origin +:refs/remotes/origin/HEAD
+              julia --project=benchmark/ -e '
+                  using Pkg
+                  Pkg.develop(PackageSpec(path=pwd()))
+                  Pkg.instantiate()'
+              # Pkg.update() allows us to benchmark even when dependencies/compat requirements change
+              julia --project=benchmark/ -e '
+                  using PkgBenchmark, Loess
+                  juliacmd = `$(Base.julia_cmd()) -O3 -e "using Pkg; Pkg.update()"`
+                  config = BenchmarkConfig(; id="origin/HEAD", juliacmd)
+                  export_markdown(stdout, judge(Loess, config; verbose=true))'

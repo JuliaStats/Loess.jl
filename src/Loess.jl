@@ -1,11 +1,11 @@
 module Loess
 
 import Distances: euclidean
-import StatsAPI: fitted, predict, residuals
+import StatsAPI: fitted, modelmatrix, predict, residuals, response
 
 using Statistics, LinearAlgebra
 
-export loess, fitted, predict, residuals
+export loess, fitted, modelmatrix, predict, residuals, response
 
 include("kd.jl")
 
@@ -16,6 +16,10 @@ struct LoessModel{T <: AbstractFloat}
     predictions_and_gradients::Dict{Vector{T}, Vector{T}} # kd-tree vertexes mapped to prediction and gradient at each vertex
     kdtree::KDTree{T}
 end
+
+modelmatrix(model::LoessModel) = model.xs
+
+response(model::LoessModel) = model.ys
 
 """
     loess(xs, ys; normalize=true, span=0.75, degree=2)
@@ -199,9 +203,9 @@ function predict(model::LoessModel, zs::AbstractMatrix)
     end
 end
 
-fitted(model::LoessModel) = predict(model, model.xs)
+fitted(model::LoessModel) = predict(model, modelmatrix(model))
 
-residuals(model::LoessModel) = fitted(model) .- model.ys
+residuals(model::LoessModel) = fitted(model) .- response(model)
 
 """
     tricubic(u)
