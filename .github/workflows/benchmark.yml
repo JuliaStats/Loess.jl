@@ -25,7 +25,8 @@ jobs:
               version: "1"
           - uses: julia-actions/cache@v1
           - uses: julia-actions/julia-buildpkg@v1
-          - run: |
+          - name: Benchmark
+            run: |
               git fetch origin +:refs/remotes/origin/HEAD
               julia --project=benchmark/ -e 'using Pkg; Pkg.instantiate(); Pkg.develop(PackageSpec(path=pwd()))'
               # Pkg.update() allows us to benchmark even when dependencies/compat requiremetns change
