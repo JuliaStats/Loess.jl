@@ -147,6 +147,9 @@ function build_kdtree(xs::AbstractMatrix{T},
 
     j = _select_j(xs)
     n, m = size(xs)
+    # performance testing showed that sorting everything at once was dramatically faster
+    # than repeated partial sorting with partialsort! when there are ties:
+    # https://github.com/JuliaStats/Loess.jl/pull/74
     if !issorted(view(xs, perm, j))
         @debug "received unsorted data, sorting"
         sortperm!(perm, view(xs, :, j))
