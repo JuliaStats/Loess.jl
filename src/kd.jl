@@ -182,7 +182,7 @@ function build_kdtree(xs::AbstractMatrix{T},
     # The details here are reversed engineered from the C/Fortran implementation wrapped
     # by R and also distribtued on NETLIB.
     mid = (length(xjs) + 1) ÷ 2
-    @debug "Candidate median index and median value" mid xs[mid, j]
+    @debug "Candidate median index and median value" mid xjs[mid]
 
     offset = 0
     local mid1, mid2
@@ -190,7 +190,7 @@ function build_kdtree(xs::AbstractMatrix{T},
         mid1 = mid + offset
         mid2 = mid1 + 1
         if mid1 < 1
-            @debug "mid1 is zero. All elements are identical. Creating vertex and then two leaves" mid1 length(xjs) xs[mid, j]
+            @debug "mid1 is zero. All elements are identical. Creating vertex and then two leaves" mid1 length(xjs) xjs[mid]
             offset = mid1 = 0
             mid2 = length(xjs) + 1
             break
