@@ -1,6 +1,6 @@
 name = "Loess"
 uuid = "4345ca2d-374a-55d4-8d30-97f9976e7612"
-version = "0.6.1"
+version = "0.6.2"
 
 [deps]
 Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"

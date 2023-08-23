@@ -47,6 +47,20 @@ end
     @test_broken predict(model, x)[end] ≈ pred[end] atol=1e-5
 end
 
+@testset "lots of ties" begin
+    # adapted from https://github.com/JuliaStats/Loess.jl/pull/74#discussion_r1294303522
+    x = repeat([π/4*i for i in -20:20], inner=101)
+    y = sin.(x)
+
+    model = loess(x,y; span=0.2)
+    for i in -3:3
+        @test predict(model, i * π) ≈ 0 atol=1e-12
+        # not great tolerance but loess also struggles to capture the sine peaks
+        @test abs(predict(model, i * π + π / 2 )) ≈ 0.9 atol=0.1
+    end
+
+end
+
 @test_throws DimensionMismatch loess([1.0 2.0; 3.0 4.0], [1.0])
 
 @testset "Issue 28" begin

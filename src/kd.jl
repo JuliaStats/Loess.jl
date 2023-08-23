@@ -41,7 +41,6 @@ function KDTree(
 ) where T <: AbstractFloat
 
     n, m = size(xs)
-    perm = collect(1:n)
 
     bounds = Array{T}(undef, 2, m)
     for j in 1:m
@@ -63,12 +62,11 @@ function KDTree(
         push!(verts, T[vert...])
     end
 
+    perm = collect(1:n)
     root = build_kdtree(xs, perm, bounds, leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
-    KDTree(convert(Matrix{T}, xs), collect(1:n), root, verts, bounds)
+    KDTree(convert(Matrix{T}, xs), perm, root, verts, bounds)
 end
-
-
 
 
 """
@@ -88,6 +86,32 @@ function diameter(bounds::Matrix)
     euclidean(vec(bounds[1,:]), vec(bounds[2,:]))
 end
 
+"""
+    _select_j(xs::AbstractMatrix{T})
+
+Select the column for sorting the rows xs based on the column with the largest spread.
+"""
+function _select_j(xs::AbstractMatrix{T}) where {T <: AbstractFloat}
+    size(xs, 2) == 1 && return 1
+
+    # split on the dimension with the largest spread
+    # maxspread, j = findmax(maximum(xs[perm, k]) - minimum(xs[perm, k]) for k in 1:m)
+    j = 1
+    maxspread = 0
+    @inbounds for k in axes(xs, 2)
+        xmin = Inf
+        xmax = -Inf
+        @inbounds for i in axes(xs, 1)
+            xmin = min(xmin, xs[i, k])
+            xmax = max(xmax, xs[i, k])
+        end
+        if xmax - xmin > maxspread
+            maxspread = xmax - xmin
+            j = k
+        end
+    end
+    return j
+end
 
 """
     build_kdtree(xs, perm, bounds, leaf_size_cutoff, leaf_diameter_cutoff, verts)
@@ -121,28 +145,20 @@ function build_kdtree(xs::AbstractMatrix{T},
     Base.require_one_based_indexing(xs)
     Base.require_one_based_indexing(perm)
 
+    j = _select_j(xs)
     n, m = size(xs)
+    # performance testing showed that sorting everything at once was dramatically faster
+    # than repeated partial sorting with partialsort! when there are ties:
+    # https://github.com/JuliaStats/Loess.jl/pull/74
+    if !issorted(view(xs, perm, j))
+        @debug "received unsorted data, sorting"
+        sortperm!(perm, view(xs, :, j))
+    end
+    xjs = view(xs, perm, j)
 
     if length(perm) <= leaf_size_cutoff || diameter(bounds) <= leaf_diameter_cutoff
         @debug "Creating leaf node" length(perm) leaf_size_cutoff diameter(bounds) leaf_diameter_cutoff
         return nothing
-    end
-
-    # split on the dimension with the largest spread
-    # maxspread, j = findmax(maximum(xs[perm, k]) - minimum(xs[perm, k]) for k in 1:m)
-    j = 1
-    maxspread = 0
-    for k in 1:m
-        xmin = Inf
-        xmax = -Inf
-        for i in perm
-            xmin = min(xmin, xs[i, k])
-            xmax = max(xmax, xs[i, k])
-        end
-        if xmax - xmin > maxspread
-            maxspread = xmax - xmin
-            j = k
-        end
     end
 
     # Find the "median" and partition
@@ -165,8 +181,8 @@ function build_kdtree(xs::AbstractMatrix{T},
     #
     # The details here are reversed engineered from the C/Fortran implementation wrapped
     # by R and also distribtued on NETLIB.
-    mid = (length(perm) + 1) ÷ 2
-    @debug "Candidate median index and median value" mid xs[perm[mid], j]
+    mid = (length(xjs) + 1) ÷ 2
+    @debug "Candidate median index and median value" mid xjs[mid]
 
     offset = 0
     local mid1, mid2
@@ -174,20 +190,19 @@ function build_kdtree(xs::AbstractMatrix{T},
         mid1 = mid + offset
         mid2 = mid1 + 1
         if mid1 < 1
-            @debug "mid1 is zero. All elements are identical. Creating vertex and then two leaves" mid1 length(perm) xs[perm[mid], j]
+            @debug "mid1 is zero. All elements are identical. Creating vertex and then two leaves" mid1 length(xjs) xjs[mid]
             offset = mid1 = 0
-            mid2 = length(perm) + 1
+            mid2 = length(xjs) + 1
             break
         end
-        if mid2 > length(perm)
-            @debug "mid2 is out of bounds. Continuing with negative offset" mid2 length(perm) offset
+        if mid2 > length(xjs)
+            @debug "mid2 is out of bounds. Continuing with negative offset" mid2 length(xjs) offset
             # This makes the offset 0, 1, -1, 2, -2, ...
             offset = -offset + (offset <= 0)
             continue
         end
-        p12 = partialsort!(perm, mid1:mid2, by = i -> xs[i, j])
-        if xs[p12[1], j] == xs[p12[2], j]
-            @debug "tie! Adjusting offset" xs[p12[1], j] xs[p12[2], j] offset
+        if xjs[mid1] == xjs[mid2]
+            # @debug "tie! Adjusting offset" xs[p12[1], j] xs[p12[2], j] offset
             # This makes the offset 0, 1, -1, 2, -2, ...
             offset = -offset + (offset <= 0)
         else
@@ -195,7 +210,7 @@ function build_kdtree(xs::AbstractMatrix{T},
         end
     end
     mid += offset
-    med = xs[perm[mid], j]
+    med = xjs[mid]
     @debug "Accepted median index and median value" mid med
 
     leftbounds = copy(bounds)
