@@ -107,3 +107,9 @@ end
         end
     end
 end
+
+@testset "small datasets. Issue 82" begin
+    ft = loess([1.0], [1.0])
+    @test predict(ft, 1.0) == 1.0
+    @test_throws ArgumentError loess(Float64[], Float64[])
+end

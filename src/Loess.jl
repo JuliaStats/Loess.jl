@@ -52,12 +52,15 @@ function loess(
     Base.require_one_based_indexing(xs)
     Base.require_one_based_indexing(ys)
 
-    if size(xs, 1) != size(ys, 1)
+    if size(xs, 1) != length(ys)
         throw(DimensionMismatch("Predictor and response arrays must of the same length"))
+    end
+    if isempty(ys)
+        throw(ArgumentError("input arrays are empty"))
     end
 
     n, m = size(xs)
-    q = floor(Int, span * n)
+    q = max(1, floor(Int, span * n))
 
     # TODO: We need to keep track of how we are normalizing so we can
     # correctly apply predict to unnormalized data. We should have a normalize
