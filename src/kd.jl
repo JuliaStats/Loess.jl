@@ -9,11 +9,11 @@ end
 
 
 struct KDTree{T <: AbstractFloat}
-    xs::Matrix{T}         # A matrix of n, m-dimensional observations
-    perm::Vector{Int}     # permutation of data to avoid modifying xs
-    root::KDNode{T}       # root node
+    xs::Matrix{T}                   # A matrix of n, m-dimensional observations
+    perm::Vector{Int}               # permutation of data to avoid modifying xs
+    root::Union{Nothing, KDNode{T}} # root node
     verts::Set{Vector{T}}
-    bounds::Matrix{T}     # Top-level bounding box
+    bounds::Matrix{T}               # Top-level bounding box
 end
 
 
