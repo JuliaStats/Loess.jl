@@ -5,16 +5,17 @@ import StatsAPI: fitted, modelmatrix, predict, residuals, response
 
 using Statistics, LinearAlgebra
 
-export loess, fitted, modelmatrix, predict, residuals, response
+export loess, fitted, modelmatrix, predict, residuals, response, ci
 
 include("kd.jl")
-
 
 struct LoessModel{T <: AbstractFloat}
     xs::Matrix{T} # An n by m predictor matrix containing n observations from m predictors
     ys::Vector{T} # A length n response vector
     predictions_and_gradients::Dict{Vector{T}, Vector{T}} # kd-tree vertexes mapped to prediction and gradient at each vertex
     kdtree::KDTree{T}
+    p::Float64
+    bootstrappedmodels::Vector{LoessModel{T}}
 end
 
 modelmatrix(model::LoessModel) = model.xs
@@ -22,7 +23,7 @@ modelmatrix(model::LoessModel) = model.xs
 response(model::LoessModel) = model.ys
 
 """
-    loess(xs, ys; normalize=true, span=0.75, degree=2)
+    loess(xs, ys; normalize=true, span=0.75, degree=2, cell=0.2, p=-1.0)
 
 Fit a loess model.
 
@@ -35,18 +36,53 @@ Args:
   - `degree`: Polynomial degree.
   - `cell`: Control parameter for bucket size. Internal interpolation nodes will be
     added to the K-D tree until the number of bucket element is below `n * cell * span`.
+  - `p`: confidence level. For values <= 0.0 (default value -1.0) no bootstrapped models are computed saving much computational time and no confidence intervals can be evaluated. 
+  For 0.0<p<0.5 confidence intervals with confidence level 1.0-p can be evaluated using the function ci.  
 
 Returns:
   A fit `LoessModel`.
 
 """
+
+const MCruns=10000
+
 function loess(
+   xs::AbstractMatrix{T},
+   ys::AbstractVector{T};
+   normalize::Bool = true,
+   span::AbstractFloat = 0.75,
+   degree::Integer = 2,
+   cell::AbstractFloat = 0.2,
+   p::Float64=-1.0
+) where T<:AbstractFloat 
+   if p>=0.5
+      throw(ArgumentError("p must be smaller than 0.5"))
+   end
+
+   if p <= 0.0
+      return createloessmodel(xs, ys, normalize, span, degree, cell)
+   else
+      MCmodels=Vector{LoessModel{T}}(undef, MCruns)
+      for i=1:MCruns
+         indices=[rand(1:length(xs)) for j in 1:length(xs)]
+         MCxs=xs[indices, :]
+         MCys=ys[indices]
+         MCmodels[i] = createloessmodel(MCxs, MCys, normalize, span, degree, cell)
+      end
+
+      return createloessmodel(xs, ys, normalize, span, degree, cell, p, MCmodels)
+   end
+end
+
+function createloessmodel(
     xs::AbstractMatrix{T},
-    ys::AbstractVector{T};
+    ys::AbstractVector{T},
     normalize::Bool = true,
     span::AbstractFloat = 0.75,
     degree::Integer = 2,
-    cell::AbstractFloat = 0.2
+    cell::AbstractFloat = 0.2,
+    p::Float64=-1.0,
+    bootstrappedmodels::Vector{LoessModel{T}}=LoessModel{T}[]
 ) where T<:AbstractFloat
 
     Base.require_one_based_indexing(xs)
@@ -143,7 +179,7 @@ function loess(
         ]
     end
 
-    LoessModel(convert(Matrix{T}, xs), convert(Vector{T}, ys), predictions_and_gradients, kdtree)
+    LoessModel(convert(Matrix{T}, xs), convert(Vector{T}, ys), predictions_and_gradients, kdtree, p, bootstrappedmodels)
 end
 
 loess(xs::AbstractVector{T}, ys::AbstractVector{T}; kwargs...) where {T<:AbstractFloat} =
@@ -168,10 +204,16 @@ end
 # Returns:
 #   A length n' vector of predicted response values.
 #
+
+struct OutOfDomain <: Exception
+end
+
 function predict(model::LoessModel{T}, z::Number) where T
     adjacent_verts = traverse(model.kdtree, (T(z),))
 
-    @assert(length(adjacent_verts) == 2)
+    if (length(adjacent_verts) != 2)
+      throw(OutOfDomain())
+    end
     v₁, v₂ = adjacent_verts[1][1], adjacent_verts[2][1]
 
     if z == v₁ || z == v₂
@@ -209,6 +251,42 @@ end
 fitted(model::LoessModel) = predict(model, modelmatrix(model))
 
 residuals(model::LoessModel) = fitted(model) .- response(model)
+
+function ci(model::LoessModel{T}, z::Number) where T
+   if model.p<0.0
+      throw(ArgumentError)("no confidence intervals available")
+   end
+
+   bsz=Float64[]
+   for bsmodel in model.bootstrappedmodels
+      try
+         prediction=predict(bsmodel, z)
+         push!(bsz, prediction)
+      catch
+      end
+   end
+   bsz=sort(bsz)
+   lowerind=Int(floor(length(bsz) * model.p))
+   higherind=Int(ceil(length(bsz) * (1.0-model.p)))
+   if lowerind<1 || higherind>length(bsz)
+      throw(OutOfDomain())
+   end
+   return bsz[lowerind], bsz[higherind]
+end
+
+function ci(model::LoessModel, zs::AbstractVector)
+   if size(model.xs, 2) > 1
+       throw(ArgumentError("multivariate blending not yet implemented"))
+   end
+   lower=zeros(length(zs))
+   higher=zeros(length(zs))
+   for i=1:length(zs)
+      z=zs[i]
+      lower[i], higher[i] = ci(model, z)
+   end
+   return lower, higher
+end
+
 
 """
     tricubic(u)
