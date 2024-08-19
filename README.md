@@ -23,8 +23,18 @@ model = loess(xs, ys, span=0.5)
 us = range(extrema(xs)...; step = 0.1)
 vs = predict(model, us)
 
-scatter(xs, ys)
-plot!(us, vs, legend=false)
+scatter(xs, ys, label=:none)
+plot!(us, vs, label="LOESS regression", color=:red)
+
+#for confidence intervals a p-value has to be specified.
+modelwithci = loess(xs, ys, span=0.5, p=0.01)
+
+vs = predict(modelwithci, us)
+
+lower, higher = ci(modelwithci, us)
+
+plot!(us, lower, label="0.99 confidence interval", color=:blue)
+plot!(us, higher, label=:none, color=:blue)
 ```
 
 ![Example Plot](loess.svg)
