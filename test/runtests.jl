@@ -113,3 +113,9 @@ end
     @test predict(ft, 1.0) == 1.0
     @test_throws ArgumentError loess(Float64[], Float64[])
 end
+
+@testset "infinite recursion. Issue 60" begin
+    x = collect(1.0:10.0)
+    y = convert(Vector{Union{Nothing, Float64}}, x)
+    @test_throws MethodError loess(x, y)
+end
