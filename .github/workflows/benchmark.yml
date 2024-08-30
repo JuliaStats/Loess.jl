@@ -3,7 +3,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 on:
-  pull_request:
+  pull_request_target:
     branches:
       - master
       - main
@@ -18,8 +18,8 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
           fail-fast: false
-        permissions: 
-          pull-requests: write 
+        permissions:
+          pull_request_target: write
         steps:
           - uses: actions/checkout@v4
           - uses: julia-actions/setup-julia@v1
