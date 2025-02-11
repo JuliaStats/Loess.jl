@@ -119,3 +119,11 @@ end
     y = convert(Vector{Union{Nothing, Float64}}, x)
     @test_throws MethodError loess(x, y)
 end
+
+@testset "multivariate two dimensions" begin
+    f_true(x) = 2*x[1] + 5 * x[1]*x[2]
+    pts = [[x;y] for x in 1.0:1//3:10.0, y in 0.0:0.25:5.0][:]
+    model = loess(stack(pts; dims=1), f_true.(pts); normalize=false, span=0.9)
+    @test all(f_true(pt) .≈ predict(model, tuple(pt...)) for pt in pts) broken=true
+    # [f_true.(pts) [predict(model, tuple(pt...)) for pt in pts]]
+end
