@@ -205,6 +205,16 @@ function predict(model::LoessModel, zs::AbstractVector)
     return [predict(model, z) for z in zs]
 end
 
+function predict(model, xs::Vector{<:Real})
+    (xlo, xhi, ylo, yhi) = Loess.traverse(model.kdtree, tuple(xs...))
+    constraints = [
+            ([x, y], model.predictions_and_gradients[[x;y]][1], model.predictions_and_gradients[[x;y]][2:3])
+            for (x, y) in [(xlo, ylo), (xhi, ylo), (xlo, yhi), (xhi, yhi)]
+        ];
+    coeffs = Loess.cubic_interpolation(constraints);
+    Loess.eval_cubic(coeffs, xs)
+end
+
 function predict(model::LoessModel, zs::AbstractMatrix)
     if size(model.xs, 2) != size(zs, 2)
         throw(DimensionMismatch("number of columns in input matrix must match the number of columns in the model matrix"))
@@ -263,6 +273,53 @@ function cubic_interpolation(x₁, y₁, dy₁, x₂, y₂, dy₂)
         num3 / Δx³
     )
 end
+
+"""
+
+Consider a cubic polynomial in two variables:
+f(x,y) = a₀₀ + a₁₀x + a₀₁y + a₂₀x² + a₁₁xy + a₀₂y² + a₃₀x³ + a₂₁x²y + a₁₂xy² + a₀₃y³
+
+This has 10 coefficients to determine.
+
+For each vertex (xᵢ,yᵢ), we get these equations:
+
+f(x,y) = a₀₀ + a₁₀x + a₀₁y + a₂₀x² + a₁₁xy + a₀₂y² + a₃₀x³ + a₂₁x²y + a₁₂xy² + a₀₃y³
+
+∂f/∂x = a₁₀ + 2a₂₀x + a₁₁y + 3a₃₀x² + 2a₂₁xy + a₁₂y²
+
+∂f/∂y = a₀₁ + a₁₁x + 2a₀₂y + a₂₁x² + 2a₁₂xy + 3a₀₃y²
+"""
+function cubic_interpolation(constraints::Vector{<:Tuple{Vector{T}, T, Vector{T}}}) where T <: Number
+    # Build A matrix by stacking constraint matrices
+    A = vcat([
+        [
+            1  x[1]  x[2]  x[1]^2  x[1]*x[2]  x[2]^2  x[1]^3  x[1]^2*x[2]  x[1]*x[2]^2  x[2]^3;
+            0  1     0     2x[1]   x[2]       0       3x[1]^2  2x[1]*x[2]   x[2]^2       0;
+            0  0     1     0       x[1]       2x[2]    0       x[1]^2       2x[1]*x[2]    3x[2]^2
+        ] for (x, _, _) in constraints
+    ]...)
+
+    # Build b vector by stacking values and gradients
+    b = vcat([
+        [
+            y;
+            dydx[1];
+            dydx[2]
+        ] for (_, y, dydx) in constraints
+    ]...)
+
+    # Solve the system using least squares
+    return A \ b
+end
+
+function eval_cubic(coeffs, x::Vector{T}) where T <: Number
+    x₁, x₂ = x[1], x[2]
+    return coeffs[1] +
+           coeffs[2]*x₁ + coeffs[3]*x₂ +
+           coeffs[4]*x₁^2 + coeffs[5]*x₁*x₂ + coeffs[6]*x₂^2 +
+           coeffs[7]*x₁^3 + coeffs[8]*x₁^2*x₂ + coeffs[9]*x₁*x₂^2 + coeffs[10]*x₂^3
+end
+
 
 """
     tnormalize!(x,q)
