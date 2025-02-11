@@ -205,8 +205,8 @@ function predict(model::LoessModel, zs::AbstractVector)
     return [predict(model, z) for z in zs]
 end
 
-function predict(model, xs::Vector{<:Real})
-    (xlo, xhi, ylo, yhi) = Loess.traverse(model.kdtree, tuple(xs...))
+function predict(model, xs::NTuple{2, T}) where T <: Real
+    (xlo, xhi, ylo, yhi) = Loess.traverse(model.kdtree, T.(tuple(xs...)))
     constraints = [
             ([x, y], model.predictions_and_gradients[[x;y]][1], model.predictions_and_gradients[[x;y]][2:3])
             for (x, y) in [(xlo, ylo), (xhi, ylo), (xlo, yhi), (xhi, yhi)]
@@ -275,6 +275,7 @@ function cubic_interpolation(x₁, y₁, dy₁, x₂, y₂, dy₂)
 end
 
 """
+Inputs are: [x1, x2], y, [dy/dx1, dy/dx2]
 
 Consider a cubic polynomial in two variables:
 f(x,y) = a₀₀ + a₁₀x + a₀₁y + a₂₀x² + a₁₁xy + a₀₂y² + a₃₀x³ + a₂₁x²y + a₁₂xy² + a₀₃y³
@@ -312,7 +313,7 @@ function cubic_interpolation(constraints::Vector{<:Tuple{Vector{T}, T, Vector{T}
     return A \ b
 end
 
-function eval_cubic(coeffs, x::Vector{T}) where T <: Number
+function eval_cubic(coeffs, x::NTuple{2, T}) where T <: Number
     x₁, x₂ = x[1], x[2]
     return coeffs[1] +
            coeffs[2]*x₁ + coeffs[3]*x₂ +
