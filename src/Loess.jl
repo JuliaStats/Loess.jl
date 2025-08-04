@@ -9,7 +9,6 @@ export loess, fitted, modelmatrix, predict, residuals, response
 
 include("kd.jl")
 
-
 struct LoessModel{T <: AbstractFloat}
     xs::Matrix{T} # An n by m predictor matrix containing n observations from m predictors
     ys::Vector{T} # A length n response vector
