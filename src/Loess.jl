@@ -219,7 +219,7 @@ end
 
 fitted(model::LoessModel) = predict(model, modelmatrix(model))
 
-residuals(model::LoessModel) = fitted(model) .- response(model)
+residuals(model::LoessModel) = response(model) .- fitted(model)
 
 """
     tricubic(u)
