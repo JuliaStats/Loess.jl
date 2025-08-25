@@ -109,13 +109,18 @@ function _loess(
                 xl *= x
             end
         end
-
-        if VERSION < v"1.7.0-DEV.1188"
-            F = qr(us, Val(true))
-        else
-            F = qr(us, ColumnNorm())
+        
+        coefs = Matrix{Real}(undef, size(us, 2), 1)
+        try
+            coefs = cholesky(us' * us) \ (us' * vs)
+        catch PosDefException
+            if VERSION < v"1.7.0-DEV.1188"
+                F = qr(us, Val(true))
+            else
+                F = qr(us, ColumnNorm())
+            end
+            coefs = F \ vs
         end
-        coefs = F\vs
 
         predictions_and_gradients[vert] = [
             us[1, :]' * coefs; # the prediction
