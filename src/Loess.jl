@@ -61,7 +61,6 @@ function _loess(
 
     # Initialize the regression arrays
     us = Array{T}(undef, q, 1 + degree * m)
-    du1dt = zeros(T, m, 1 + degree * m)
     vs = Array{T}(undef, q)
 
     for vert in kdtree.verts
@@ -84,12 +83,22 @@ function _loess(
         dmax = maximum([ds[perm[i]] for i = 1:q])
         dmax = iszero(dmax) ? one(dmax) : dmax
 
+        # We center the predictors since this will greatly simplify subsequent
+        # calculations. With centerting, the intercept is the prediction at the
+        # the vertex and the derivative is linear coefficient.
+        #
+        # We still only support m == 1 so we hard code for m=1 below. If support
+        # for more predictors is introduced then this code would have to be adjusted.
+        #
+        # See Cleveland and Grosse page 54 column 1. The results assume centering
+        # but I'm not sure, the centering is explicitly stated in the paper.
+        x₁ = xs[perm[1], 1]
         for i in 1:q
             pᵢ = perm[i]
             w = sqrt(tricubic(ds[pᵢ] / dmax))
             us[i, 1] = w
-            for j in 1:m
-                x = xs[pᵢ, j]
+            for j in 1:m # we still only support m == 1
+                x = xs[pᵢ, j] - x₁ # center
                 wxl = w
                 for l in 1:degree
                     wxl *= x
@@ -99,17 +108,6 @@ function _loess(
             vs[i] = ys[pᵢ] * w
         end
 
-        # Compute the gradient of the vertex
-        pᵢ = perm[1]
-        for j in 1:m
-            x = xs[pᵢ, j]
-            xl = one(x)
-            for l in 1:degree
-                du1dt[j, 1 + (j - 1)*degree + l] = l * xl
-                xl *= x
-            end
-        end
-
         if VERSION < v"1.7.0-DEV.1188"
             F = qr(us, Val(true))
         else
@@ -117,10 +115,7 @@ function _loess(
         end
         coefs = F\vs
 
-        predictions_and_gradients[vert] = [
-            us[1, :]' * coefs; # the prediction
-            du1dt * coefs      # the gradient of the prediction
-        ]
+        predictions_and_gradients[vert] = coefs[1:2]
     end
 
     LoessModel(convert(Matrix{T}, xs), convert(Vector{T}, ys), predictions_and_gradients, kdtree)
