@@ -40,6 +40,7 @@ function _loess(
     end
 
     n, m = size(xs)
+    L = zeros(T, n, n)
     q = max(1, floor(Int, span * n))
 
     # TODO: We need to keep track of how we are normalizing so we can
@@ -108,12 +109,12 @@ function _loess(
             vs[i] = ys[pᵢ] * w
         end
 
-        if VERSION < v"1.7.0-DEV.1188"
-            F = qr(us, Val(true))
-        else
-            F = qr(us, ColumnNorm())
-        end
-        coefs = F\vs
+        F = svd(us)
+
+        @show perm
+        L₁ = F.V[1:1,:] * (Diagonal(F.S) \ (F.U' * Diagonal(us[:, 1])))
+
+        coefs = F \ vs
 
         predictions_and_gradients[vert] = coefs[1:2]
     end
