@@ -1,6 +1,7 @@
 # Loess
 
 [![CI](https://github.com/JuliaStats/Loess.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/JuliaStats/Loess.jl/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/JuliaStats/Loess.jl/graph/badge.svg?token=2Y8TFDRD0L)](https://codecov.io/gh/JuliaStats/Loess.jl)
 
 This is a pure Julia loess implementation, based on the fast kd-tree based
 approximation described in the original Cleveland, et al papers[1,2,3], implemented
