@@ -268,7 +268,7 @@ function predict(
     end
 
     if !(0 < level < 1)
-        throw(ArgumentError("level must be between zero and one but was $level"))
+        throw(ArgumentError(LazyString("level must be between zero and one but was ", level)))
     end
 
     predictions = [predict(model, _x) for _x in x]
