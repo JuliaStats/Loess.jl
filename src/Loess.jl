@@ -118,17 +118,23 @@ function _loess(
                     us[i, 1 + (j - 1)*degree + l] = wxl # w*x^l
                 end
             end
-            vs[i] = ys[pᵢ] * w
+            vs[i] = ys[pᵢ]
         end
 
         Fact = svd(us)
 
-        Ftmp = (Fact \ Diagonal(us[:, 1]))[1:2, :]
+        # compute the inverse of the singular values with thresholding similar
+        # to pinv
+        Sinv = map!(t -> t > eps(one(t)) * q ? inv(t) : zero(t), Fact.S, Fact.S)
+        # Compute S⁻¹ * Uᵗ * W in place
+        Fact.U .*= view(us, :, 1) .* Sinv'
+        # Finalize the pseudo inverse
+        Ftmp = Fact.V * Fact.U'
         FF = zeros(T, 2, n)
-        FF[:, perm[1:q]] = Ftmp
+        FF[:, view(perm, 1:q)] = view(Ftmp, 1:2, :)
         F[vert] = FF
 
-        coefs = Fact \ vs
+        coefs = Ftmp * vs
 
         predictions_and_gradients[vert] = coefs[1:2]
     end
