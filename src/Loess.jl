@@ -320,16 +320,10 @@ function _hatmatrix_x(model::LoessModel{T}, x::Number) where T
     if x == v₁ || x == v₂
         Lx = model.hatmatrix_generator[[x]][1, :]
     else
-        Lx = zeros(T, n)
+        Lv₁ = model.hatmatrix_generator[v₁]
+        Lv₂ = model.hatmatrix_generator[v₂]
         for j in 1:n
-            b_int = cubic_interpolation(
-                v₁,
-                model.hatmatrix_generator[[v₁]][1, j],
-                model.hatmatrix_generator[[v₁]][2, j],
-                v₂,
-                model.hatmatrix_generator[[v₂]][1, j],
-                model.hatmatrix_generator[[v₂]][2, j],
-            )
+            b_int = cubic_interpolation(v₁, Lv₁[1, j], Lv₁[2, j], v₂, Lv₂[1, j], Lv₂[2, j])
             Lx[j] = evalpoly(x, b_int)
         end
     end
