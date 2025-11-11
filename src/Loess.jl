@@ -285,7 +285,7 @@ function predict(
         ε̂ = L̄ * model.ys
         s = sqrt(sum(abs2, ε̂) / δ₁)
         ρ = δ₁^2 / δ₂
-        qt = quantile(TDist(ρ), (1 + level) / 2)
+        qt = tdistinvcdf(ρ, (1 + level) / 2)
         sₓ = [s*sqrt(sum(abs2, _hatmatrix_x(model, _x))) for _x in x]
         lower = [_x - qt * _sₓ for (_x, _sₓ) in zip(predictions, sₓ)]
         upper = [_x + qt * _sₓ for (_x, _sₓ) in zip(predictions, sₓ)]
