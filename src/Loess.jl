@@ -286,7 +286,10 @@ function predict(
     else
         # see Cleveland and Grosse 1991 p.50.
         L = hatmatrix(model)
-        L̄ = L - I
+        for i in diagind(L)
+            L[i] -= 1
+        end
+        L̄ = L
         L̄L̄ = L̄' * L̄
         δ₁ = tr(L̄L̄)
         δ₂ = sum(abs2, L̄L̄)
