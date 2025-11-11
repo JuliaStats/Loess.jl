@@ -264,7 +264,7 @@ function predict(
         if interval === :prediction
             throw(ArgumentError("predictions not implemented. If you know how to compute them then please file an issue and explain how."))
         end
-        throw(ArgumentError("interval must be either :prediction or :confidence but was $interval"))
+        throw(ArgumentError(LazyString("interval must be either :prediction or :confidence but was :", interval)))
     end
 
     if !(0 < level < 1)
