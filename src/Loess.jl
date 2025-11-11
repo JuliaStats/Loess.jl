@@ -4,7 +4,7 @@ import Distances: euclidean
 import StatsAPI: fitted, modelmatrix, predict, residuals, response
 
 using Statistics, LinearAlgebra
-using Distributions: Normal, TDist, quantile
+using StatsFuns: tdistinvcdf
 
 export loess, fitted, modelmatrix, predict, residuals, response
 
