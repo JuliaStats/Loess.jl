@@ -286,10 +286,7 @@ function predict(
     else
         # see Cleveland and Grosse 1991 p.50.
         L = hatmatrix(model)
-        for i in diagind(L)
-            L[i] -= 1
-        end
-        L̄ = L
+        L̄ = L - I
         L̄L̄ = L̄' * L̄
         δ₁ = tr(L̄L̄)
         δ₂ = sum(abs2, L̄L̄)
@@ -297,7 +294,11 @@ function predict(
         s = sqrt(sum(abs2, ε̂) / δ₁)
         ρ = δ₁^2 / δ₂
         qt = tdistinvcdf(ρ, (1 + level) / 2)
-        sₓ = [s*sqrt(sum(abs2, _hatmatrix_x(model, _x))) for _x in x_v]
+        sₓ = if model.xs === x
+            [s * norm(view(L, i, :)) for i in 1:length(x)]
+        else
+            [s * norm(_hatmatrix_x(model, _x)) for _x in x_v]
+        end
         lower = [_x - qt * _sₓ for (_x, _sₓ) in zip(predictions, sₓ)]
         upper = [_x + qt * _sₓ for (_x, _sₓ) in zip(predictions, sₓ)]
         return LoessPrediction(predictions, lower, upper, sₓ, δ₁, δ₂, s, ρ)
