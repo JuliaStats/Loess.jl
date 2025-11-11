@@ -97,7 +97,7 @@ function _loess(
         dmax = iszero(dmax) ? one(dmax) : dmax
 
         # We center the predictors since this will greatly simplify subsequent
-        # calculations. With centerting, the intercept is the prediction at the
+        # calculations. With centering, the intercept is the prediction at the
         # the vertex and the derivative is linear coefficient.
         #
         # We still only support m == 1 so we hard code for m=1 below. If support
