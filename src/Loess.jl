@@ -242,7 +242,7 @@ When the prodictor takes values at the edges of the KD tree, the predictions
 are already computed and the function is simply a look-up. For other values
 of the preditor, a cubic spline approximation is used for the prediction.
 
-When confidence bounds are requested, a matrix of size `n \times n`` is
+When confidence bounds are requested, a matrix of size ``n \times n`` is
 constructed where ``n`` is the length of the fitted data vector. Hence,
 this caluculation is only feasible when ``n`` is not too large. For details
 on the calculations, see the cited reference.
