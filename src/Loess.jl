@@ -259,6 +259,8 @@ function predict(
     if size(model.xs, 2) > 1
         throw(ArgumentError("multivariate blending not yet implemented"))
     end
+    # FIXME! Adjust this when multivariate predictors are supported
+    x_v = vec(x)
 
     if interval !== nothing && interval !== :confidence
         if interval === :prediction
@@ -271,7 +273,7 @@ function predict(
         throw(ArgumentError(LazyString("level must be between zero and one but was ", level)))
     end
 
-    predictions = [predict(model, _x) for _x in x]
+    predictions = [predict(model, _x) for _x in x_v]
 
     if interval === nothing
         return predictions
@@ -286,7 +288,7 @@ function predict(
         s = sqrt(sum(abs2, ε̂) / δ₁)
         ρ = δ₁^2 / δ₂
         qt = tdistinvcdf(ρ, (1 + level) / 2)
-        sₓ = [s*sqrt(sum(abs2, _hatmatrix_x(model, _x))) for _x in x]
+        sₓ = [s*sqrt(sum(abs2, _hatmatrix_x(model, _x))) for _x in x_v]
         lower = [_x - qt * _sₓ for (_x, _sₓ) in zip(predictions, sₓ)]
         upper = [_x + qt * _sₓ for (_x, _sₓ) in zip(predictions, sₓ)]
         return LoessPrediction(predictions, lower, upper, sₓ, δ₁, δ₂, s, ρ)
