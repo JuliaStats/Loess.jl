@@ -21,7 +21,7 @@ jobs:
         permissions: 
           pull-requests: write 
         steps:
-          - uses: actions/checkout@v5
+          - uses: actions/checkout@v6
           - uses: julia-actions/setup-julia@v1
             with:
               version: "1"
