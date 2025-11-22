@@ -43,10 +43,8 @@ function KDTree(
     n, m = size(xs)
 
     bounds = Array{T}(undef, 2, m)
-    for j in 1:m
-        col = xs[:,j]
-        bounds[1, j] = minimum(col)
-        bounds[2, j] = maximum(col)
+    for (j, col) in enumerate(eachcol(xs))
+        bounds[1, j], bounds[2, j] = extrema(col)
     end
 
     diam = diameter(bounds)
@@ -83,7 +81,7 @@ Returns:
 
 """
 function diameter(bounds::Matrix)
-    euclidean(vec(bounds[1,:]), vec(bounds[2,:]))
+    euclidean(view(bounds, 1, :), view(bounds, 2, :))
 end
 
 """
@@ -223,7 +221,7 @@ function build_kdtree(xs::AbstractMatrix{T},
     rightnode = build_kdtree(xs, view(perm,mid2:length(perm)), rightbounds,
                              leaf_size_cutoff, leaf_diameter_cutoff, verts)
 
-    coords = Array{Array}(undef, m)
+    coords = Vector{Vector{T}}(undef, m)
     for i in 1:m
         if i == j
             coords[i] = [med]
@@ -275,19 +273,20 @@ function traverse(kdtree::KDTree{T}, x::NTuple{N,T}) where {N,T}
         end
     end
 
-    bounds = copy(kdtree.bounds)
+    lowerbounds = kdtree.bounds[1, :]
+    upperbounds = kdtree.bounds[2, :]
     node = kdtree.root
 
-    return _traverse!(bounds, node, x)
+    return _traverse!(lowerbounds, upperbounds, node, x)
 end
 
-_traverse!(bounds, node::Nothing, x) = bounds
-function _traverse!(bounds, node::KDNode, x)
+_traverse!(lowerbounds, upperbounds, node::Nothing, x) = lowerbounds, upperbounds
+function _traverse!(lowerbounds, upperbounds, node::KDNode, x)
     if x[node.j] <= node.med
-        bounds[2, node.j] = node.med
-        return _traverse!(bounds, node.leftnode, x)
+        upperbounds[node.j] = node.med
+        return _traverse!(lowerbounds, upperbounds, node.leftnode, x)
     else
-        bounds[1, node.j] = node.med
-        return _traverse!(bounds, node.rightnode, x)
+        lowerbounds[node.j] = node.med
+        return _traverse!(lowerbounds, upperbounds, node.rightnode, x)
     end
 end

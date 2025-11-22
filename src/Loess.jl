@@ -93,7 +93,7 @@ function _loess(
 
         # find the q closest points
         partialsort!(perm, 1:q, by=i -> ds[i])
-        dmax = maximum([ds[perm[i]] for i = 1:q])
+        dmax = maximum(ds[perm[i]] for i = 1:q)
         dmax = iszero(dmax) ? one(dmax) : dmax
 
         # We center the predictors since this will greatly simplify subsequent
@@ -129,14 +129,12 @@ function _loess(
         # Compute S⁻¹ * Uᵗ * W in place
         Fact.U .*= view(us, :, 1) .* Sinv'
         # Finalize the pseudo inverse
-        Ftmp = Fact.V * Fact.U'
+        Ftmp = view(Fact.V, 1:2, :) * Fact.U'
         FF = zeros(T, 2, n)
-        FF[:, view(perm, 1:q)] = view(Ftmp, 1:2, :)
+        FF[:, view(perm, 1:q)] = Ftmp
         F[vert] = FF
 
-        coefs = Ftmp * vs
-
-        predictions_and_gradients[vert] = coefs[1:2]
+        predictions_and_gradients[vert] = Ftmp * vs
     end
 
     LoessModel(
@@ -202,21 +200,22 @@ end
 #   A length n' vector of predicted response values.
 #
 function predict(model::LoessModel{T}, x::Number) where T
-    adjacent_verts = traverse(model.kdtree, (T(x),))
+    v₁, v₂ = traverse(model.kdtree, (T(x),))
 
-    @assert(length(adjacent_verts) == 2)
-    v₁, v₂ = adjacent_verts[1][1], adjacent_verts[2][1]
+    v₁_val = only(v₁)
+    v₂_val = only(v₂)
+    if x == v₁_val
+        return first(model.predictions_and_gradients[v₁])
+    elseif x == v₂_val
+        return first(model.predictions_and_gradients[v₂])
+    else
+        y₁, dy₁ = model.predictions_and_gradients[v₁]
+        y₂, dy₂ = model.predictions_and_gradients[v₂]
 
-    if x == v₁ || x == v₂
-        return first(model.predictions_and_gradients[[x]])
+        b_int = cubic_interpolation(v₁_val, y₁, dy₁, v₂_val, y₂, dy₂)
+
+        return evalpoly(x, b_int)
     end
-
-    y₁, dy₁ = model.predictions_and_gradients[[v₁]]
-    y₂, dy₂ = model.predictions_and_gradients[[v₂]]
-
-    b_int = cubic_interpolation(v₁, y₁, dy₁, v₂, y₂, dy₂)
-
-    return evalpoly(x, b_int)
 end
 
 struct LoessPrediction{T}
@@ -286,7 +285,16 @@ function predict(
     else
         # see Cleveland and Grosse 1991 p.50.
         L = hatmatrix(model)
-        L̄ = L - I
+        if model.xs === x
+            norm_hatmatrix_x = [norm(Li) for Li in eachrow(L)]
+        else
+            tmp = Vector{eltype(L)}(undef, length(model.ys))
+            norm_hatmatrix_x = [norm(_hatmatrix_x!(tmp, model, _x)) for _x in x_v]
+        end
+        L̄ = L
+        for i in diagind(L̄)
+            L̄[i] -= 1
+        end
         L̄L̄ = L̄' * L̄
         δ₁ = tr(L̄L̄)
         δ₂ = sum(abs2, L̄L̄)
@@ -294,13 +302,9 @@ function predict(
         s = sqrt(sum(abs2, ε̂) / δ₁)
         ρ = δ₁^2 / δ₂
         qt = tdistinvcdf(ρ, (1 + level) / 2)
-        sₓ = if model.xs === x
-            [s * norm(view(L, i, :)) for i in 1:length(x)]
-        else
-            [s * norm(_hatmatrix_x(model, _x)) for _x in x_v]
-        end
-        lower = [_x - qt * _sₓ for (_x, _sₓ) in zip(predictions, sₓ)]
-        upper = [_x + qt * _sₓ for (_x, _sₓ) in zip(predictions, sₓ)]
+        sₓ = lmul!(s, norm_hatmatrix_x)
+        lower = muladd(-qt, sₓ, predictions)
+        upper = muladd(qt, sₓ, predictions)
         return LoessPrediction(predictions, lower, upper, sₓ, δ₁, δ₂, s, ρ)
     end
 end
@@ -314,29 +318,31 @@ function hatmatrix(model::LoessModel{T}) where T
     L = zeros(T, n, n)
     for (i, r) in enumerate(eachrow(model.xs))
         z = only(r) # we still only support one predictor
-        L[i, :] = _hatmatrix_x(model, z)
+        _hatmatrix_x!(view(L, i, :), model, z)
     end
     return L
 end
 
 # Compute elements of the hat matrix of `model` at `x`.
 # See Cleveland and Grosse 1991 p. 54.
-function _hatmatrix_x(model::LoessModel{T}, x::Number) where T
+function _hatmatrix_x!(Lx::AbstractVector{T}, model::LoessModel{T}, x::Number) where T
+    Base.require_one_based_indexing(Lx)
     n = length(model.ys)
+    @assert(length(Lx) == n)
 
-    adjacent_verts = traverse(model.kdtree, (T(x),))
+    v₁, v₂ = traverse(model.kdtree, (T(x),))
 
-    @assert(length(adjacent_verts) == 2)
-    v₁, v₂ = adjacent_verts[1], adjacent_verts[2]
-
-    if x == v₁ || x == v₂
-        Lx = model.hatmatrix_generator[[x]][1, :]
+    v₁_val = only(v₁)
+    v₂_val = only(v₂)
+    if x == v₁_val
+        copyto!(Lx, view(model.hatmatrix_generator[v₁], 1, :))
+    elseif x == v₂_val
+        copyto!(Lx, view(model.hatmatrix_generator[v₂], 1, :))
     else
-        Lx = zeros(T, n)
-        Lv₁ = model.hatmatrix_generator[[v₁]]
-        Lv₂ = model.hatmatrix_generator[[v₂]]
+        Lv₁ = model.hatmatrix_generator[v₁]
+        Lv₂ = model.hatmatrix_generator[v₂]
         for j in 1:n
-            b_int = cubic_interpolation(v₁, Lv₁[1, j], Lv₁[2, j], v₂, Lv₂[1, j], Lv₂[2, j])
+            b_int = cubic_interpolation(v₁_val, Lv₁[1, j], Lv₁[2, j], v₂_val, Lv₂[1, j], Lv₂[2, j])
             Lx[j] = evalpoly(x, b_int)
         end
     end
@@ -403,9 +409,11 @@ Modifies:
 function tnormalize!(xs::AbstractMatrix{T}, q::T=0.1) where T <: AbstractFloat
     n, m = size(xs)
     cut = ceil(Int, (q * n))
-    for j in 1:m
-        tmp = sort!(xs[:,j])
-        xs[:,j] ./= mean(tmp[cut+1:n-cut])
+    range = (cut - 1):(n - cut)
+    for xi in eachcol(xs)
+        copyto!(tmp, xi)
+        bulk = partialsort!(tmp, range)
+        rdiv!(xi, mean(bulk))
     end
     xs
 end
