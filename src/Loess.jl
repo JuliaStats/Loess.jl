@@ -4,6 +4,7 @@ import Distances: euclidean
 import StatsAPI: fitted, modelmatrix, predict, residuals, response
 
 using Statistics, LinearAlgebra
+using StatsFuns: tdistinvcdf
 
 export loess, fitted, modelmatrix, predict, residuals, response
 
@@ -11,9 +12,18 @@ include("kd.jl")
 
 
 struct LoessModel{T <: AbstractFloat}
-    xs::Matrix{T} # An n by m predictor matrix containing n observations from m predictors
-    ys::Vector{T} # A length n response vector
-    predictions_and_gradients::Dict{Vector{T}, Vector{T}} # kd-tree vertexes mapped to prediction and gradient at each vertex
+    # An n by m predictor matrix containing n observations from m predictors
+    xs::Matrix{T}
+    # A length n response vector
+    ys::Vector{T}
+    # kd-tree vertexes mapped to prediction and gradient at each vertex
+    predictions_and_gradients::Dict{Vector{T}, Vector{T}}
+    # kd-tree vertexes mapped to generating vectors for prediction (first row)
+    # and gradient (second row) at each vertex. The values values of the
+    # predictions_and_gradients field are the values of hatmatrix_generator
+    # multiplied by ys
+    hatmatrix_generator::Dict{Vector{T}, Matrix{T}}
+    # The kd-tree
     kdtree::KDTree{T}
 end
 
@@ -61,8 +71,10 @@ function _loess(
 
     # Initialize the regression arrays
     us = Array{T}(undef, q, 1 + degree * m)
-    du1dt = zeros(T, m, 1 + degree * m)
     vs = Array{T}(undef, q)
+    # The hat matrix and the derivative at the vertices of kdtree
+    F = Dict{Vector{T},Matrix{T}}()
+
 
     for vert in kdtree.verts
         # reset perm
@@ -81,49 +93,57 @@ function _loess(
 
         # find the q closest points
         partialsort!(perm, 1:q, by=i -> ds[i])
-        dmax = maximum([ds[perm[i]] for i = 1:q])
+        dmax = maximum(ds[perm[i]] for i = 1:q)
         dmax = iszero(dmax) ? one(dmax) : dmax
 
+        # We center the predictors since this will greatly simplify subsequent
+        # calculations. With centering, the intercept is the prediction at the
+        # the vertex and the derivative is linear coefficient.
+        #
+        # We still only support m == 1 so we hard code for m=1 below. If support
+        # for more predictors is introduced then this code would have to be adjusted.
+        #
+        # See Cleveland and Grosse page 54 column 1. The results assume centering
+        # but I'm not sure, the centering is explicitly stated in the paper.
+        x₁ = xs[perm[1], 1]
         for i in 1:q
             pᵢ = perm[i]
             w = sqrt(tricubic(ds[pᵢ] / dmax))
             us[i, 1] = w
-            for j in 1:m
-                x = xs[pᵢ, j]
+            for j in 1:m # we still only support m == 1
+                x = xs[pᵢ, j] - x₁ # center
                 wxl = w
                 for l in 1:degree
                     wxl *= x
                     us[i, 1 + (j - 1)*degree + l] = wxl # w*x^l
                 end
             end
-            vs[i] = ys[pᵢ] * w
+            vs[i] = ys[pᵢ]
         end
 
-        # Compute the gradient of the vertex
-        pᵢ = perm[1]
-        for j in 1:m
-            x = xs[pᵢ, j]
-            xl = one(x)
-            for l in 1:degree
-                du1dt[j, 1 + (j - 1)*degree + l] = l * xl
-                xl *= x
-            end
-        end
+        Fact = svd(us)
 
-        if VERSION < v"1.7.0-DEV.1188"
-            F = qr(us, Val(true))
-        else
-            F = qr(us, ColumnNorm())
-        end
-        coefs = F\vs
+        # compute the inverse of the singular values with thresholding similar
+        # to pinv
+        Sinv = map!(t -> t > eps(one(t)) * q ? inv(t) : zero(t), Fact.S, Fact.S)
+        # Compute S⁻¹ * Uᵗ * W in place
+        Fact.U .*= view(us, :, 1) .* Sinv'
+        # Finalize the pseudo inverse
+        Ftmp = view(Fact.V, 1:2, :) * Fact.U'
+        FF = zeros(T, 2, n)
+        FF[:, view(perm, 1:q)] = Ftmp
+        F[vert] = FF
 
-        predictions_and_gradients[vert] = [
-            us[1, :]' * coefs; # the prediction
-            du1dt * coefs      # the gradient of the prediction
-        ]
+        predictions_and_gradients[vert] = Ftmp * vs
     end
 
-    LoessModel(convert(Matrix{T}, xs), convert(Vector{T}, ys), predictions_and_gradients, kdtree)
+    LoessModel(
+        convert(Matrix{T}, xs),
+        convert(Vector{T}, ys),
+        predictions_and_gradients,
+        F,
+        kdtree,
+    )
 end
 
 """
@@ -179,47 +199,155 @@ end
 # Returns:
 #   A length n' vector of predicted response values.
 #
-function predict(model::LoessModel{T}, z::Number) where T
-    adjacent_verts = traverse(model.kdtree, (T(z),))
+function predict(model::LoessModel{T}, x::Number) where T
+    v₁, v₂ = traverse(model.kdtree, (T(x),))
 
-    @assert(length(adjacent_verts) == 2)
-    v₁, v₂ = adjacent_verts[1][1], adjacent_verts[2][1]
+    v₁_val = only(v₁)
+    v₂_val = only(v₂)
+    if x == v₁_val
+        return first(model.predictions_and_gradients[v₁])
+    elseif x == v₂_val
+        return first(model.predictions_and_gradients[v₂])
+    else
+        y₁, dy₁ = model.predictions_and_gradients[v₁]
+        y₂, dy₂ = model.predictions_and_gradients[v₂]
 
-    if z == v₁ || z == v₂
-        return first(model.predictions_and_gradients[[z]])
+        b_int = cubic_interpolation(v₁_val, y₁, dy₁, v₂_val, y₂, dy₂)
+
+        return evalpoly(x, b_int)
     end
-
-    y₁, dy₁ = model.predictions_and_gradients[[v₁]]
-    y₂, dy₂ = model.predictions_and_gradients[[v₂]]
-
-    b_int = cubic_interpolation(v₁, y₁, dy₁, v₂, y₂, dy₂)
-
-    return evalpoly(z, b_int)
 end
 
-function predict(model::LoessModel, zs::AbstractVector)
+struct LoessPrediction{T}
+    predictions::Vector{T}
+    lower::Vector{T}
+    upper::Vector{T}
+    sₓ::Vector{T}
+    δ₁::T
+    δ₂::T
+    s::T
+    ρ::T
+end
+
+"""
+    predict(
+        model::LoessModel,
+        x::AbstractVecOrMat = modelmatrix(model);
+        interval::Union{Symbol, Nothing}=nothing,
+        level::Real=0.95
+    )
+
+Compute predictions from the fitted Loess `model` at the values in `x`.
+By default, only the predictions are returned. If `interval` is set to
+:confidence` then a `LoessPrediction` struct is returned which contains
+upper and lower confidence bounds at `level` as well the the quantities
+used for computing the confidence bounds.
+
+When the prodictor takes values at the edges of the KD tree, the predictions
+are already computed and the function is simply a look-up. For other values
+of the preditor, a cubic spline approximation is used for the prediction.
+
+When confidence bounds are requested, a matrix of size ``n \times n`` is
+constructed where ``n`` is the length of the fitted data vector. Hence,
+this caluculation is only feasible when ``n`` is not too large. For details
+on the calculations, see the cited reference.
+
+Reference: Cleveland, William S., and Eric Grosse. "Computational methods
+for local regression." Statistics and computing 1, no. 1 (1991): 47-62.
+"""
+function predict(
+    model::LoessModel,
+    x::AbstractVecOrMat = modelmatrix(model);
+    interval::Union{Symbol, Nothing}=nothing,
+    level::Real=0.95
+)
     if size(model.xs, 2) > 1
         throw(ArgumentError("multivariate blending not yet implemented"))
     end
+    # FIXME! Adjust this when multivariate predictors are supported
+    x_v = vec(x)
 
-    return [predict(model, z) for z in zs]
-end
-
-function predict(model::LoessModel, zs::AbstractMatrix)
-    if size(model.xs, 2) != size(zs, 2)
-        throw(DimensionMismatch("number of columns in input matrix must match the number of columns in the model matrix"))
+    if interval !== nothing && interval !== :confidence
+        if interval === :prediction
+            throw(ArgumentError("predictions not implemented. If you know how to compute them then please file an issue and explain how."))
+        end
+        throw(ArgumentError(LazyString("interval must be either :prediction or :confidence but was :", interval)))
     end
 
-    if size(zs, 2) == 1
-        return predict(model, vec(zs))
+    if !(0 < level < 1)
+        throw(ArgumentError(LazyString("level must be between zero and one but was ", level)))
+    end
+
+    predictions = [predict(model, _x) for _x in x_v]
+
+    if interval === nothing
+        return predictions
     else
-        return [predict(model, row) for row in eachrow(zs)]
+        # see Cleveland and Grosse 1991 p.50.
+        L = hatmatrix(model)
+        if model.xs === x
+            norm_hatmatrix_x = [norm(Li) for Li in eachrow(L)]
+        else
+            tmp = Vector{eltype(L)}(undef, length(model.ys))
+            norm_hatmatrix_x = [norm(_hatmatrix_x!(tmp, model, _x)) for _x in x_v]
+        end
+        L̄ = L
+        for i in diagind(L̄)
+            L̄[i] -= 1
+        end
+        L̄L̄ = L̄' * L̄
+        δ₁ = tr(L̄L̄)
+        δ₂ = sum(abs2, L̄L̄)
+        ε̂ = L̄ * model.ys
+        s = sqrt(sum(abs2, ε̂) / δ₁)
+        ρ = δ₁^2 / δ₂
+        qt = tdistinvcdf(ρ, (1 + level) / 2)
+        sₓ = lmul!(s, norm_hatmatrix_x)
+        lower = muladd(-qt, sₓ, predictions)
+        upper = muladd(qt, sₓ, predictions)
+        return LoessPrediction(predictions, lower, upper, sₓ, δ₁, δ₂, s, ρ)
     end
 end
 
 fitted(model::LoessModel) = predict(model, modelmatrix(model))
 
 residuals(model::LoessModel) = response(model) .- fitted(model)
+
+function hatmatrix(model::LoessModel{T}) where T
+    n = length(model.ys)
+    L = zeros(T, n, n)
+    for (i, r) in enumerate(eachrow(model.xs))
+        z = only(r) # we still only support one predictor
+        _hatmatrix_x!(view(L, i, :), model, z)
+    end
+    return L
+end
+
+# Compute elements of the hat matrix of `model` at `x`.
+# See Cleveland and Grosse 1991 p. 54.
+function _hatmatrix_x!(Lx::AbstractVector{T}, model::LoessModel{T}, x::Number) where T
+    Base.require_one_based_indexing(Lx)
+    n = length(model.ys)
+    @assert(length(Lx) == n)
+
+    v₁, v₂ = traverse(model.kdtree, (T(x),))
+
+    v₁_val = only(v₁)
+    v₂_val = only(v₂)
+    if x == v₁_val
+        copyto!(Lx, view(model.hatmatrix_generator[v₁], 1, :))
+    elseif x == v₂_val
+        copyto!(Lx, view(model.hatmatrix_generator[v₂], 1, :))
+    else
+        Lv₁ = model.hatmatrix_generator[v₁]
+        Lv₂ = model.hatmatrix_generator[v₂]
+        for j in 1:n
+            b_int = cubic_interpolation(v₁_val, Lv₁[1, j], Lv₁[2, j], v₂_val, Lv₂[1, j], Lv₂[2, j])
+            Lx[j] = evalpoly(x, b_int)
+        end
+    end
+    return Lx
+end
 
 """
     tricubic(u)
@@ -281,9 +409,11 @@ Modifies:
 function tnormalize!(xs::AbstractMatrix{T}, q::T=0.1) where T <: AbstractFloat
     n, m = size(xs)
     cut = ceil(Int, (q * n))
-    for j in 1:m
-        tmp = sort!(xs[:,j])
-        xs[:,j] ./= mean(tmp[cut+1:n-cut])
+    range = (cut - 1):(n - cut)
+    for xi in eachcol(xs)
+        copyto!(tmp, xi)
+        bulk = partialsort!(tmp, range)
+        rdiv!(xi, mean(bulk))
     end
     xs
 end
