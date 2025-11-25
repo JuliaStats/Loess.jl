@@ -299,7 +299,7 @@ function predict(
         else
             [s * norm(_hatmatrix_x(model, _x)) for _x in x_v]
         end
-        lower = [_x - qt * _sₓ for (_x, _sₓ) in zip(predictions, sₓ)]
+        lower = muladd(-qt, sₓ, predictions)
         upper = [_x + qt * _sₓ for (_x, _sₓ) in zip(predictions, sₓ)]
         return LoessPrediction(predictions, lower, upper, sₓ, δ₁, δ₂, s, ρ)
     end

@@ -4,7 +4,7 @@ const SUITE = BenchmarkGroup()
 
 SUITE["random"] = BenchmarkGroup()
 
-for i in 2:4
+for i in 2:6
     n = 10^i
     x = rand(MersenneTwister(42), n)
     y = sqrt.(x)
