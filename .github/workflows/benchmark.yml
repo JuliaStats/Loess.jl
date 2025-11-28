@@ -32,7 +32,6 @@ jobs:
               git fetch origin +:refs/remotes/origin/HEAD
               julia --project=benchmark/ -e '
                   using Pkg
-                  Pkg.develop(PackageSpec(path=pwd()))
                   Pkg.instantiate()'
               # Pkg.update() allows us to benchmark even when dependencies/compat requirements change
               julia --project=benchmark/ -e '
