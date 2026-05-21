@@ -124,8 +124,9 @@ function _loess(
         Fact = svd(us)
 
         # compute the inverse of the singular values with thresholding similar
-        # to pinv
-        Sinv = map!(t -> t > eps(one(t)) * q ? inv(t) : zero(t), Fact.S, Fact.S)
+        # to pinv (relative to the largest singular value)
+        S₁ = first(Fact.S)
+        Sinv = map!(t -> t > eps(one(t)) * q * S₁ ? inv(t) : zero(t), Fact.S, Fact.S)
         # Compute S⁻¹ * Uᵗ * W in place
         Fact.U .*= view(us, :, 1) .* Sinv'
         # Finalize the pseudo inverse
